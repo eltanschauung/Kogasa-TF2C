@@ -18,6 +18,7 @@
 #define TF_CLASS_SNIPER         2
 #define TF_CLASS_SOLDIER        3
 #define TF_CLASS_SPY                8
+#define TF_CLASS_CIVILIAN       10
 #define TF_CLASS_UNKNOWN        0
 
 #define TF_TEAM_BLU                 3
@@ -37,10 +38,11 @@ ConVar g_hEnabled;
 ConVar g_hFlags;
 ConVar g_hImmunity;
 ConVar g_hTopScore;
-ConVar g_hLimits[TF_CLASS_ENGINEER + 1];
+ConVar g_hDisplayUnlim;
+ConVar g_hLimits[TF_CLASS_CIVILIAN + 1];
 char g_sGameMode[32] = "Default";
 
-static const char g_ClassNames[TF_CLASS_ENGINEER + 1][16] = {
+static const char g_ClassNames[TF_CLASS_CIVILIAN + 1][16] = {
     "Unknown",
     "Scout",
     "Sniper",
@@ -50,10 +52,11 @@ static const char g_ClassNames[TF_CLASS_ENGINEER + 1][16] = {
     "Heavy",
     "Pyro",
     "Spy",
-    "Engineer"
+    "Engineer",
+    "Civilian"
 };
 
-static const char g_ClassSuffixes[TF_CLASS_ENGINEER + 1][12] = {
+static const char g_ClassSuffixes[TF_CLASS_CIVILIAN + 1][12] = {
     "unknown",
     "scouts",
     "snipers",
@@ -63,12 +66,14 @@ static const char g_ClassSuffixes[TF_CLASS_ENGINEER + 1][12] = {
     "heavies",
     "pyros",
     "spies",
-    "engineers"
+    "engineers",
+    "civilians"
 };
 
-char g_sSounds[10][24] = {"", "vo/scout_no03.mp3",   "vo/sniper_no04.mp3", "vo/soldier_no01.mp3",
+char g_sSounds[11][24] = {"", "vo/scout_no03.mp3",   "vo/sniper_no04.mp3", "vo/soldier_no01.mp3",
                                 "vo/demoman_no03.mp3", "vo/medic_no03.mp3",  "vo/heavy_no02.mp3",
-                                "vo/pyro_no01.mp3",    "vo/spy_no02.mp3",    "vo/engineer_no03.mp3"};
+                                "vo/pyro_no01.mp3",    "vo/spy_no02.mp3",    "vo/engineer_no03.mp3",
+                                "vo/civilian_no01.mp3"};
 
 public void OnPluginStart()
 {
@@ -77,14 +82,26 @@ public void OnPluginStart()
     g_hFlags    = CreateConVar("restrict_flags",    "z",  "Admin flags allowed to bypass class limits.");
     g_hImmunity = CreateConVar("restrict_immunity", "0",  "Enable/disable admin immunity for class limits.");
     g_hTopScore = CreateConVar("classlimits_topscore", "0", "Allow top team scorers to bypass class limits.", _, true, 0.0, true, 1.0);
+    g_hDisplayUnlim = CreateConVar("display_unlim", "0", "If 1, show unlimited classes in class limit displays.", _, true, 0.0, true, 1.0);
 
-    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_ENGINEER; classId++)
+    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_CIVILIAN; classId++)
     {
-        char cvarName[32];
-        char description[64];
-        Format(cvarName, sizeof(cvarName), "restrict_%s", g_ClassSuffixes[classId]);
-        Format(description, sizeof(description), "Limit for %s.", g_ClassNames[classId]);
-        g_hLimits[classId] = CreateConVar(cvarName, "-1", description);
+        if (classId == TF_CLASS_CIVILIAN)
+        {
+            char cvarName[32];
+            char description[64];
+            Format(cvarName, sizeof(cvarName), "restrict_%s", g_ClassSuffixes[classId]);
+            Format(description, sizeof(description), "Limit for %s.", g_ClassNames[classId]);
+            g_hLimits[classId] = CreateConVar(cvarName, "-1", description);
+        }
+        else if (classId <= TF_CLASS_ENGINEER)
+        {
+            char cvarName[32];
+            char description[64];
+            Format(cvarName, sizeof(cvarName), "restrict_%s", g_ClassSuffixes[classId]);
+            Format(description, sizeof(description), "Limit for %s.", g_ClassNames[classId]);
+            g_hLimits[classId] = CreateConVar(cvarName, "-1", description);
+        }
     }
 
     HookEvent("player_changeclass", Event_PlayerClass);
@@ -144,10 +161,17 @@ public void Event_PlayerSay(Event event, const char[] name, bool dontBroadcast)
     }
 
     char limitText[32];
-    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_ENGINEER; classId++)
+    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_CIVILIAN; classId++)
     {
-        FormatClassLimitText(classId, limitText, sizeof(limitText));
-        CPrintToChat(client, "{olive}  %s{default}: {gold}%s{default}", g_ClassNames[classId], limitText);
+        if (classId == TF_CLASS_CIVILIAN || classId <= TF_CLASS_ENGINEER)
+        {
+            if (!ShouldDisplayClassInList(classId))
+            {
+                continue;
+            }
+            FormatClassLimitText(classId, limitText, sizeof(limitText));
+            CPrintToChat(client, "{olive}  %s{default}: {gold}%s{default}", g_ClassNames[classId], limitText);
+        }
     }
     UpdateGameModeName();
     CPrintToChat(client, "{olive}[Class Limits]{default} Current gamemode: {yellow}%s{default}", g_sGameMode);
@@ -169,21 +193,49 @@ public Action Command_ShowClassLimits(int client, int args)
     }
 
     char limitText[32];
-    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_ENGINEER; classId++)
+    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_CIVILIAN; classId++)
     {
-        FormatClassLimitText(classId, limitText, sizeof(limitText));
+        if (classId == TF_CLASS_CIVILIAN || classId <= TF_CLASS_ENGINEER)
+        {
+            if (!ShouldDisplayClassInList(classId))
+            {
+                continue;
+            }
+            FormatClassLimitText(classId, limitText, sizeof(limitText));
 
-        if (fromConsole)
-        {
-            PrintToServer("  %s: %s", g_ClassNames[classId], limitText);
-        }
-        else
-        {
-            CPrintToChat(client, "{olive}  %s{default}: {gold}%s{default}", g_ClassNames[classId], limitText);
+            if (fromConsole)
+            {
+                PrintToServer("  %s: %s", g_ClassNames[classId], limitText);
+            }
+            else
+            {
+                CPrintToChat(client, "{olive}  %s{default}: {gold}%s{default}", g_ClassNames[classId], limitText);
+            }
         }
     }
 
     return Plugin_Handled;
+}
+
+bool ShouldDisplayClassInList(int classId)
+{
+    if (classId < TF_CLASS_SCOUT || (classId > TF_CLASS_ENGINEER && classId != TF_CLASS_CIVILIAN))
+    {
+        return false;
+    }
+
+    if (g_hDisplayUnlim != null && g_hDisplayUnlim.BoolValue)
+    {
+        return true;
+    }
+
+    ConVar limitCvar = g_hLimits[classId];
+    if (limitCvar == null)
+    {
+        return false;
+    }
+
+    return limitCvar.FloatValue >= 0.0;
 }
 
 public void OnConfigsExecuted()
@@ -201,7 +253,10 @@ public void Event_PlayerClass(Event event, const char[] name, bool dontBroadcast
     if (!IsClassLimitImmune(iClient) && IsClassAtLimit(iTeam, iClass, limit))
     {
         //ShowVGUIPanel(iClient, iTeam == TF_TEAM_BLU ? "class_blue" : "class_red");
-        EmitSoundToClient(iClient, g_sSounds[iClass]);
+        if (iClass >= 0 && iClass < sizeof(g_sSounds) && g_sSounds[iClass][0])
+        {
+            EmitSoundToClient(iClient, g_sSounds[iClass]);
+        }
         NotifyClassRestricted(iClient, iClass, limit);
         TF2_SetPlayerClass(iClient, view_as<TFClassType>(g_iClass[iClient]));
     }
@@ -219,7 +274,10 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
     {
         //ShowVGUIPanel(iClient, iTeam == TF_TEAM_BLU ? "class_blue" : "class_red");
         NotifyClassRestricted(iClient, g_iClass[iClient], limit);
-        EmitSoundToClient(iClient, g_sSounds[g_iClass[iClient]]);
+        if (g_iClass[iClient] >= 0 && g_iClass[iClient] < sizeof(g_sSounds) && g_sSounds[g_iClass[iClient]][0])
+        {
+            EmitSoundToClient(iClient, g_sSounds[g_iClass[iClient]]);
+        }
         PickClass(iClient);
     }
 }
@@ -233,7 +291,10 @@ public void Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
     if (!IsClassLimitImmune(iClient) && IsClassAtLimit(iTeam, g_iClass[iClient], limit))
     {
         //ShowVGUIPanel(iClient, iTeam == TF_TEAM_BLU ? "class_blue" : "class_red");
-        EmitSoundToClient(iClient, g_sSounds[g_iClass[iClient]]);
+        if (g_iClass[iClient] >= 0 && g_iClass[iClient] < sizeof(g_sSounds) && g_sSounds[g_iClass[iClient]][0])
+        {
+            EmitSoundToClient(iClient, g_sSounds[g_iClass[iClient]]);
+        }
         NotifyClassRestricted(iClient, g_iClass[iClient], limit);
     }
 }
@@ -351,7 +412,7 @@ bool IsClassAtLimit(int iTeam, int iClass, int &limitOut)
 {
     limitOut = -1;
 
-    if (!g_hEnabled.BoolValue || iTeam < TF_TEAM_RED || iClass < TF_CLASS_SCOUT || iClass > TF_CLASS_ENGINEER)
+    if (!g_hEnabled.BoolValue || iTeam < TF_TEAM_RED || iClass < TF_CLASS_SCOUT || (iClass > TF_CLASS_ENGINEER && iClass != TF_CLASS_CIVILIAN))
     {
         return false;
     }
@@ -421,8 +482,14 @@ bool IsImmune(int iClient)
 void PickClass(int iClient)
 {
     // Loop through all classes, starting at random class
-    for (int i = GetRandomInt(TF_CLASS_SCOUT, TF_CLASS_ENGINEER), iClass = i, iTeam = GetClientTeam(iClient);;)
+    for (int i = GetRandomInt(TF_CLASS_SCOUT, TF_CLASS_CIVILIAN), iClass = i, iTeam = GetClientTeam(iClient);;)
     {
+        // Skip civilian if not at index 10, or skip gap between engineer and civilian
+        if (i == TF_CLASS_ENGINEER + 1 && i != TF_CLASS_CIVILIAN)
+        {
+            i = TF_CLASS_CIVILIAN;
+        }
+        
         // If team's class is not full, set client's class
         int limit;
         if (!IsClassAtLimit(iTeam, i, limit))
@@ -433,7 +500,7 @@ void PickClass(int iClient)
             break;
         }
         // If next class index is invalid, start at first class
-        else if (++i > TF_CLASS_ENGINEER)
+        else if (++i > TF_CLASS_CIVILIAN)
             i = TF_CLASS_SCOUT;
         // If loop has finished, stop searching
         else if (i == iClass)
@@ -468,7 +535,7 @@ void NotifyClassRestricted(int client, int classId, int limit)
 
 void FormatClassLimitText(int classId, char[] buffer, int maxlen)
 {
-    if (classId < TF_CLASS_SCOUT || classId > TF_CLASS_ENGINEER)
+    if (classId < TF_CLASS_SCOUT || (classId > TF_CLASS_ENGINEER && classId != TF_CLASS_CIVILIAN))
     {
         strcopy(buffer, maxlen, "Unknown");
         return;
@@ -504,7 +571,7 @@ void UpdateGameModeName()
 
 void GetClassName(int classId, char[] buffer, int maxlen)
 {
-    if (classId >= TF_CLASS_SCOUT && classId <= TF_CLASS_ENGINEER)
+    if ((classId >= TF_CLASS_SCOUT && classId <= TF_CLASS_ENGINEER) || classId == TF_CLASS_CIVILIAN)
     {
         strcopy(buffer, maxlen, g_ClassNames[classId]);
     }

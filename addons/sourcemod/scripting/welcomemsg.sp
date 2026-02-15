@@ -11,9 +11,9 @@ public Plugin myinfo =
 {
 	name = "welcomemsg",
 	author = "Hombre",
-	description = "Welcomes players after 30 seconds with a server message.",
+	description = "Welcomes players and provides server info.",
 	version = "1.0",
-	url = ""
+	url = "https://kogasa.tf"
 };
 
 public void OnPluginStart()
@@ -75,7 +75,7 @@ public Action Command_News(int client, int args)
 		return Plugin_Handled;
 	}
 
-	CPrintToChat(client, "{gold}News: {default}Added a Desert Eagle for Scout, made Ambassador headshots deal 102 damage, upgraded !scramble, enabled Whaletracker for stat tracking, added !r to track weapon changes, nerfed the Hunting Revolver, added new custom weapons, added !hats");
+	CPrintToChat(client, "{gold}News: {default}Re-added the civilian with a class limit, Added a Desert Eagle for Scout, made Ambassador headshots deal 102 damage, upgraded !scramble, enabled Whaletracker for stat tracking, added !r to track weapon changes, added !hats");
 
 	return Plugin_Handled;
 }
@@ -128,7 +128,7 @@ public Action Command_Changes(int client, int args)
 		return Plugin_Handled;
 	}
 
-	CPrintToChat(client, "Buffed: {green}Ambassador | Shortstop | Candy Cane | Fan o War | Baby Face | B. Scatter | Volcano Frag | S. Jumper | Scottish Res. | Booties | Lib. Launcher");
+	CPrintToChat(client, "Buffed: {green}Ambassador | Syringe Guns | Shortstop | Candy Cane | Fan o War | Baby Face | B. Scatter | Volcano Frag | S. Jumper | Scottish Res. | Booties | Lib. Launcher");
 	CPrintToChat(client, "{green}Base Jumper | Gunboats | A. Strike | Beggars | Equalizer | Gloves of Running | Huo Long | Huntsman");
 	CPrintToChat(client, "Nerfed or removed:{red} AA Cannon | Cyclops | Demo Shields | Hunting Revolver | Sydney Sleeper | Tranq. Gun | Mine Layer | Vaccinator | Short Circuit | Natascha | Sentries");
 

@@ -31,7 +31,7 @@ public void OnPluginStart()
     g_OutputMap = new StringMap();
 
     RegAdminCmd("sm_prename", Command_Prename, ADMFLAG_SLAY, "sm_prename <name_substring|steamid> <newname>");
-    RegAdminCmd("sm_reset", Command_PrenameReset, ADMFLAG_SLAY, "sm_reset <steamid> - Removes a prename rule");
+    RegAdminCmd("sm_reset", Command_PrenameReset, ADMFLAG_SLAY, "sm_reset <name_substring|steamid> - Removes a prename rule");
     RegAdminCmd("sm_migrate", Command_Migrate, ADMFLAG_SLAY, "sm_migrate - Migrates legacy name rules to SteamID rules for connected clients");
 
     BuildPath(Path_SM, g_DebugLogPath, sizeof(g_DebugLogPath), "logs/prename_migrate.log");
@@ -201,7 +201,7 @@ public Action Command_PrenameReset(int client, int args)
 {
     if (args < 1)
     {
-        ReplyToCommand(client, "[SM] Usage: sm_reset <steamid>");
+        ReplyToCommand(client, "[SM] Usage: sm_reset <name_substring|steamid>");
         return Plugin_Handled;
     }
 
@@ -211,15 +211,148 @@ public Action Command_PrenameReset(int client, int args)
 
     if (!idRaw[0])
     {
-        ReplyToCommand(client, "[SM] Usage: sm_reset <steamid>");
+        ReplyToCommand(client, "[SM] Usage: sm_reset <name_substring|steamid>");
         return Plugin_Handled;
     }
 
-    DeleteRule(idRaw);
-    RemoveIdRuleCache(idRaw);
+    // If a SteamID was provided, clear directly.
+    char steam2[32];
+    char steam64[32];
+    if (IsIdString(idRaw))
+    {
+        if (StrContains(idRaw, "STEAM_", false) == 0)
+        {
+            int match = FindClientBySteam2(idRaw);
+            if (match > 0)
+            {
+                GetClientIds(match, steam2, sizeof(steam2), steam64, sizeof(steam64));
+                char steamId[32];
+                GetPreferredClientId(steam64, steam2, steamId, sizeof(steamId));
+                if (steamId[0])
+                {
+                    DeleteRule(steamId);
+                    RemoveIdRuleCache(steamId);
+                    ReplyToCommand(client, "[SM] Prename rule removed for '%s'", steamId);
+                    return Plugin_Handled;
+                }
+            }
+        }
 
-    ReplyToCommand(client, "[SM] Prename rule removed for '%s'", idRaw);
+        DeleteRule(idRaw);
+        RemoveIdRuleCache(idRaw);
+        ReplyToCommand(client, "[SM] Prename rule removed for '%s'", idRaw);
+        return Plugin_Handled;
+    }
+
+    // Otherwise treat it as a name substring and resolve to a single client.
+    char targetName[MAX_NAME_LENGTH];
+    int target = FindSingleClientByName(client, idRaw, targetName, sizeof(targetName));
+    if (target <= 0)
+    {
+        return Plugin_Handled;
+    }
+
+    GetClientIds(target, steam2, sizeof(steam2), steam64, sizeof(steam64));
+    char steamId[32];
+    GetPreferredClientId(steam64, steam2, steamId, sizeof(steamId));
+    if (!steamId[0])
+    {
+        ReplyToCommand(client, "[SM] Failed to resolve SteamID for %s.", targetName);
+        return Plugin_Handled;
+    }
+
+    DeleteRule(steamId);
+    RemoveIdRuleCache(steamId);
+    ReplyToCommand(client, "[SM] Prename rule removed for %s (%s).", targetName, steamId);
     return Plugin_Handled;
+}
+
+static int FindSingleClientByName(int requester, const char[] patternRaw, char[] matchName, int matchMax)
+{
+    char pattern[MAX_PATTERN];
+    strcopy(pattern, sizeof(pattern), patternRaw);
+    ToLowercaseInPlace(pattern, sizeof(pattern));
+
+    int matches = 0;
+    int target = -1;
+    char matchList[256];
+    matchList[0] = '\0';
+
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (!IsClientInGame(i) || IsFakeClient(i))
+        {
+            continue;
+        }
+
+        char name[MAX_NAME_LENGTH];
+        GetClientName(i, name, sizeof(name));
+
+        char lowerName[MAX_NAME_LENGTH];
+        strcopy(lowerName, sizeof(lowerName), name);
+        ToLowercaseInPlace(lowerName, sizeof(lowerName));
+
+        if (StrContains(lowerName, pattern, false) == -1)
+        {
+            continue;
+        }
+
+        matches++;
+        target = i;
+        if (matchMax > 0)
+        {
+            strcopy(matchName, matchMax, name);
+        }
+
+        if (matches == 1)
+        {
+            strcopy(matchList, sizeof(matchList), name);
+        }
+        else if (strlen(matchList) + strlen(name) + 2 < sizeof(matchList))
+        {
+            StrCat(matchList, sizeof(matchList), ", ");
+            StrCat(matchList, sizeof(matchList), name);
+        }
+    }
+
+    if (matches == 0)
+    {
+        ReplyToCommand(requester, "[SM] No client matches '%s'.", patternRaw);
+        return -1;
+    }
+
+    if (matches > 1)
+    {
+        ReplyToCommand(requester, "[SM] Multiple matches for '%s': %s", patternRaw, matchList);
+        return -1;
+    }
+
+    return target;
+}
+
+static int FindClientBySteam2(const char[] steam2)
+{
+    if (!steam2[0])
+    {
+        return -1;
+    }
+
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (!IsClientInGame(i) || IsFakeClient(i))
+        {
+            continue;
+        }
+
+        char id[32];
+        GetClientAuthId(i, AuthId_Steam2, id, sizeof(id), true);
+        if (StrEqual(id, steam2, false))
+        {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 public Action Command_Migrate(int client, int args)

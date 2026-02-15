@@ -1191,7 +1191,15 @@ public void SQL_OnStatsQuery(Handle owner, Handle hndl, const char[] error, any 
     CPrintToChat(viewer, "{green}[WhaleTracker]{default} {lightgreen}%s", name);
     CPrintToChat(viewer, "{yellow}Kills:{default} %d {yellow}Deaths:{default} %d", kills, deaths);
     CPrintToChat(viewer, "{yellow}Assists:{default} %d", assists);
-    CPrintToChat(viewer, "{green}[WhaleTracker]{default} Visit kogasa.tf/stats to see a full webpage for server stats and more!");
+    if (deaths <= 0)
+    {
+        CPrintToChat(viewer, "{yellow}K/D:{default} %d", kills);
+    }
+    else
+    {
+        CPrintToChat(viewer, "{yellow}K/D:{default} %.2f", float(kills) / float(deaths));
+    }
+    CPrintToChat(viewer, "{green}[WhaleTracker]{default} Visit kogasa.tf/stats for more!");
 }
 
 public any Native_WhaleTracker_GetCumulativeKills(Handle plugin, int numParams)

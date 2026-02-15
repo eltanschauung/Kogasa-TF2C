@@ -73,10 +73,12 @@ ConVar g_CvarWinLimit = null;
 ConVar g_CvarExcludeMaps = null;
 ConVar g_CvarStartTime = null;
 ConVar g_CvarTimelimit = null;
+ConVar g_CvarNextMap = null;
 bool g_AutoVoteStarted = false;
 int g_TotalRounds = 0;
 ArrayList g_OldMapList = null;
 Handle g_hTimeLeftTimer = null;
+Handle g_hClearNextMapTimer = null;
 
 public void OnPluginStart()
 {
@@ -112,6 +114,7 @@ public void OnPluginStart()
         g_CvarStartTime = CreateConVar("mapeval_start", "3.0", "Specifies when to start the vote based on time remaining (minutes).", _, true, 1.0);
     }
     g_CvarTimelimit = FindConVar("mp_timelimit");
+    g_CvarNextMap = FindConVar("sm_nextmap");
     g_CvarNominateExcludeOld = CreateConVar("sm_nominate_excludeold", "1", "Specifies if MapChooser excluded maps should also be excluded from nominations", 0, true, 0.0, true, 1.0);
     g_CvarNominateExcludeCurrent = CreateConVar("sm_nominate_excludecurrent", "1", "Specifies if the current map should be excluded from nominations", 0, true, 0.0, true, 1.0);
     g_CvarNominateMaxMatches = CreateConVar("sm_nominate_maxfound", "0", "Maximum number of nomination matches to add to the menu. 0 = infinite.", _, true, 0.0);
@@ -128,6 +131,8 @@ public void OnPluginStart()
     RegConsoleCmd("sm_n", Command_Nominate);
     RegConsoleCmd("sm_nom", Command_Nominate);
     RegConsoleCmd("sm_nr", Command_Nominate);
+    AddCommandListener(Command_ReVote, "sm_revote");
+    RegAdminCmd("sm_setnextmap", Command_SetNextmap, ADMFLAG_CHANGEMAP, "sm_setnextmap <map>");
     RegAdminCmd("sm_nominate_addmap", Command_NominateAddmap, ADMFLAG_CHANGEMAP, "sm_nominate_addmap <mapname> - Forces a map to be on the next mapvote.");
 
     for (int i = 1; i <= MaxClients; i++)
@@ -166,6 +171,11 @@ public void OnMapStart()
     {
         g_CvarVoteDone.SetBool(false);
     }
+    if (g_CvarNextMap != null)
+    {
+        g_CvarNextMap.SetString("");
+    }
+    ScheduleClearNextMap();
 }
 
 public void OnMapEnd()
@@ -173,6 +183,11 @@ public void OnMapEnd()
     if (g_OldMapList == null)
     {
         return;
+    }
+
+    if (g_CvarNextMap != null)
+    {
+        g_CvarNextMap.SetString("");
     }
 
     char map[PLATFORM_MAX_PATH];
@@ -191,11 +206,34 @@ public void OnConfigsExecuted()
 {
     RefreshNominateMapList();
     SetupTimeleftTimer();
+    ScheduleClearNextMap();
 }
 
 public void OnMapTimeLeftChanged()
 {
     SetupTimeleftTimer();
+}
+
+static void ScheduleClearNextMap()
+{
+    if (g_hClearNextMapTimer != null)
+    {
+        KillTimer(g_hClearNextMapTimer);
+        g_hClearNextMapTimer = null;
+    }
+
+    g_hClearNextMapTimer = CreateTimer(0.2, Timer_ClearNextMap, _, TIMER_FLAG_NO_MAPCHANGE);
+}
+
+public Action Timer_ClearNextMap(Handle timer)
+{
+    g_hClearNextMapTimer = null;
+
+    if (g_CvarNextMap != null && (g_CvarVoteDone == null || !g_CvarVoteDone.BoolValue))
+    {
+        g_CvarNextMap.SetString("");
+    }
+    return Plugin_Stop;
 }
 
 public void Event_TFRestartRound(Event event, const char[] name, bool dontBroadcast)
@@ -623,6 +661,62 @@ public Action Command_Nominate(int client, int args)
     return Plugin_Handled;
 }
 
+public Action Command_ReVote(int client, const char[] command, int argc)
+{
+    if (client <= 0)
+    {
+        return Plugin_Continue;
+    }
+
+    if (g_AvoteVote == null || !NativeVotes_IsVoteInProgress())
+    {
+        return Plugin_Continue;
+    }
+
+    if (!NativeVotes_IsClientInVotePool(client))
+    {
+        return Plugin_Continue;
+    }
+
+    if (NativeVotes_RedrawClientVote(client))
+    {
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
+}
+
+public Action Command_SetNextmap(int client, int args)
+{
+    if (args < 1)
+    {
+        ReplyToCommand(client, "[SM] Usage: sm_setnextmap <map>");
+        return Plugin_Handled;
+    }
+
+    char map[PLATFORM_MAX_PATH];
+    char displayName[PLATFORM_MAX_PATH];
+    GetCmdArg(1, map, sizeof(map));
+
+    if (FindMap(map, displayName, sizeof(displayName)) == FindMap_NotFound)
+    {
+        ReplyToCommand(client, "[SM] %t", "Map was not found", map);
+        return Plugin_Handled;
+    }
+
+    GetMapDisplayName(displayName, displayName, sizeof(displayName));
+
+    ShowActivity2(client, "[SM] ", "%t", "Changed Next Map", displayName);
+    LogAction(client, -1, "\"%L\" changed nextmap to \"%s\"", client, map);
+
+    SetNextMap(map);
+    if (g_CvarVoteDone != null)
+    {
+        g_CvarVoteDone.SetBool(true);
+    }
+    return Plugin_Handled;
+}
+
 public Action Command_NominateAddmap(int client, int args)
 {
     if (args < 1)
@@ -794,6 +888,10 @@ public int Handler_AvoteVote(NativeVote vote, MenuAction action, int param1, int
             }
 
             NativeVotes_DisplayFail(vote, NativeVotesFail_Generic);
+            if (g_CvarNextMap != null)
+            {
+                g_CvarNextMap.SetString("");
+            }
         }
         case MenuAction_End:
         {

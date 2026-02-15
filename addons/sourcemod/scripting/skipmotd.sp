@@ -83,9 +83,6 @@ public Action Timer_ForceJoin(Handle timer, any userid)
     char className[16];
     strcopy(className, sizeof(className), classes[GetRandomInt(0, sizeof(classes) - 1)]);
     FakeClientCommand(client, "joinclass %s", className);
-    ShowVGUIPanel(client, "class_blue", _, false);
-    ShowVGUIPanel(client, "class_red", _, false);
-
     return Plugin_Handled;
 }
 
