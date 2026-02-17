@@ -3,7 +3,7 @@
 
 #include <sourcemod>
 #include <clientprefs>
-#include <multicolors>
+#include <morecolors>
 #include <tf2_stocks>
 
 #define CHECK_INTERVAL 5.0
@@ -13,6 +13,8 @@
 Handle g_hImmunityCookie;
 bool g_bClearImmunity[MAXPLAYERS + 1];
 ConVar g_hLogEnabled;
+ConVar g_hMpAutoteamBalance;
+ConVar g_hMpTeamsUnbalanceLimit;
 char g_sLogPath[PLATFORM_MAX_PATH];
 
 public Plugin myinfo =
@@ -34,7 +36,13 @@ public void OnPluginStart()
         "Autobalance immunity for current map",
         CookieAccess_Private);
 
+    ApplyServerBalanceCvars(true);
     CreateTimer(CHECK_INTERVAL, Timer_Autobalance, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+}
+
+public void OnPluginEnd()
+{
+    ApplyServerBalanceCvars(false);
 }
 
 public void OnMapStart()
@@ -76,6 +84,7 @@ public Action Timer_Autobalance(Handle timer)
 
     bool forceBalance = (absDiff > 2);
     LogBalance("Imbalance detected: red=%d blue=%d bigTeam=%s force=%s", redCount, blueCount, (bigTeam == TEAM_RED) ? "RED" : "BLU", forceBalance ? "yes" : "no");
+    PrintToServer("Imbalance detected: red=%d blue=%d bigTeam=%s force=%s", redCount, blueCount, (bigTeam == TEAM_RED) ? "RED" : "BLU", forceBalance ? "yes" : "no");
 
     int totalScore = 0;
     int totalPlayers = 0;
@@ -96,7 +105,6 @@ public Action Timer_Autobalance(Handle timer)
     }
 
     float avg = float(totalScore) / float(totalPlayers);
-    float threshold = avg * 0.9;
 
     int candidates[MAXPLAYERS];
     int candidateCount = 0;
@@ -117,10 +125,13 @@ public Action Timer_Autobalance(Handle timer)
         {
             if (IsPlayerAlive(i))
             {
-                continue;
+                if (GetRandomInt(0, 1))
+                {
+                    continue;
+                }
             }
 
-            if (float(GetClientScore(i)) >= threshold)
+            if (float(GetClientScore(i)) >= avg)
             {
                 continue;
             }
@@ -131,20 +142,19 @@ public Action Timer_Autobalance(Handle timer)
 
     if (candidateCount == 0)
     {
-        LogBalance("No eligible candidates%s on %s team. avg=%.2f threshold=%.2f total=%d", forceBalance ? "" : " below threshold", (bigTeam == TEAM_RED) ? "RED" : "BLU", avg, threshold, totalPlayers);
+        LogBalance("No eligible candidates%s on %s team. avg=%.2f threshhold=%.2f total=%d", forceBalance ? "" : " below threshold", (bigTeam == TEAM_RED) ? "RED" : "BLU", avg, avg, totalPlayers);
         return Plugin_Continue;
     }
 
     int pick = candidates[GetRandomInt(0, candidateCount - 1)];
     int newTeam = (bigTeam == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
-    LogBalance("Autobalancing %N (%d) from %s to %s. score=%d avg=%.2f threshold=%.2f candidates=%d",
+    LogBalance("Autobalancing %N (%d) from %s to %s. score=%d avg=%.2f candidates=%d",
         pick,
         GetClientUserId(pick),
         (bigTeam == TEAM_RED) ? "RED" : "BLU",
         (newTeam == TEAM_RED) ? "RED" : "BLU",
         GetClientScore(pick),
         avg,
-        threshold,
         candidateCount);
     ChangeClientTeam(pick, newTeam);
     SetClientImmunity(pick, true);
@@ -263,4 +273,27 @@ static void LogBalance(const char[] fmt, any ...)
     char buffer[256];
     VFormat(buffer, sizeof(buffer), fmt, 2);
     LogToFileEx(g_sLogPath, "%s", buffer);
+}
+
+static void ApplyServerBalanceCvars(bool pluginLoaded)
+{
+    if (g_hMpAutoteamBalance == null)
+    {
+        g_hMpAutoteamBalance = FindConVar("mp_autoteambalance");
+    }
+
+    if (g_hMpTeamsUnbalanceLimit == null)
+    {
+        g_hMpTeamsUnbalanceLimit = FindConVar("mp_teams_unbalance_limit");
+    }
+
+    if (g_hMpAutoteamBalance != null)
+    {
+        g_hMpAutoteamBalance.IntValue = pluginLoaded ? 0 : 1;
+    }
+
+    if (g_hMpTeamsUnbalanceLimit != null)
+    {
+        g_hMpTeamsUnbalanceLimit.IntValue = 1;
+    }
 }

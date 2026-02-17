@@ -1,6 +1,4 @@
 #include <sourcemod>
-#include <sdktools>
-#include <sdktools_voice>
 #include <clientprefs>
 #include <basecomm>
 #include <morecolors>
@@ -16,7 +14,6 @@
 #define FILTERS_OUTBOX_CLEANUP_INTERVAL 120
 #define FILTERS_OUTBOX_RETENTION_SECONDS 3600
 #define FILTERS_IGNORED_STEAMID64 "76561199812613650" // [U:1:1852347922]
-#define REDLIST_RAPES_THRESHOLD 1
 
 // Player state structure
 enum struct PlayerState
@@ -24,7 +21,6 @@ enum struct PlayerState
     bool isWhitelisted;        // Player bypasses all filters and blacklist
     bool isFilterWhitelisted;  // Player bypasses word filters only
     bool isBlacklisted;        // Player cannot send any messages
-    bool isredlisted;         // Player cannot hear blacklisted clients
     int rapesGiven;
     int whaleKills;
     bool hugsStatsLoaded;
@@ -33,11 +29,6 @@ enum struct PlayerState
 }
 
 PlayerState g_PlayerState[MAXPLAYERS + 1];
-bool g_VoiceBlocked[MAXPLAYERS + 1][MAXPLAYERS + 1];
-int g_AutoRedlistKills[MAXPLAYERS + 1];
-int g_AutoRedlistRapes[MAXPLAYERS + 1];
-bool g_AutoRedlistGotKills[MAXPLAYERS + 1];
-bool g_AutoRedlistGotRapes[MAXPLAYERS + 1];
 
 native int Hugs_GetRapesGiven(int client);
 native bool Hugs_AreStatsLoaded(int client);
@@ -60,7 +51,6 @@ public APLRes AskPluginLoad2(Handle self, bool late, char[] error, int err_max)
 Handle g_hCookieWhitelist;
 Handle g_hCookieFilterWhitelist;
 Handle g_hCookieBlacklist;
-Handle g_hCookieredlist;
 Handle g_hCookieNameColor;
 Handle g_hChatFrontend;
 
@@ -76,7 +66,6 @@ ConVar g_hFiltersEnabled = null;
 ConVar g_hBlacklistMinLen = null;
 ConVar g_hFiltersChristmas = null;
 ConVar g_hFiltersTeamChat = null;
-ConVar g_hRedlistEnabled = null;
 
 // Global arrays for word filtering
 char g_FilterWords[MAX_FILTERS][MAX_WORD_LENGTH];
@@ -91,7 +80,7 @@ int g_Blacklist50Count = 0;
 
 // Global arrays for forced status
 char g_ForcedStatusSteamIDs[MAX_FORCED_STATUS][32];
-char g_ForcedStatusTypes[MAX_FORCED_STATUS][32]; // "whitelist", "blacklist", "redlist", or "filter_whitelist"
+char g_ForcedStatusTypes[MAX_FORCED_STATUS][32]; // "whitelist", "blacklist", or "filter_whitelist"
 int g_ForcedStatusCount = 0;
 
 // Global array for whitelisted/immunue commands
@@ -129,11 +118,6 @@ bool Filters_DebugEnabled()
     return g_hChatDebug != null && g_hChatDebug.BoolValue;
 }
 
-bool Filters_RedlistEnabled()
-{
-    return g_hRedlistEnabled != null && g_hRedlistEnabled.BoolValue;
-}
-
 void Filters_LogDebug(const char[] fmt, any ...)
 {
     if (!Filters_DebugEnabled())
@@ -156,10 +140,6 @@ static void Filters_ResetExternalStats(int client)
     g_PlayerState[client].hugsStatsLoaded = false;
     g_PlayerState[client].whaleStatsLoaded = false;
 
-    g_AutoRedlistKills[client] = 0;
-    g_AutoRedlistRapes[client] = 0;
-    g_AutoRedlistGotKills[client] = false;
-    g_AutoRedlistGotRapes[client] = false;
 }
 
 static bool Filters_TryGetRapesGiven(int client, int &value)
@@ -388,7 +368,6 @@ public void OnPluginStart()
     g_hChatDebug = CreateConVar("filters_chat_debug", "0", "Enable verbose debug logging for chat relay");
     g_hChatFrontend = CreateConVar("filters_chat_frontend", "1", "Enable/Disable db functions");
     g_hFiltersEnabled = CreateConVar("filters", "0", "If 0, blacklist word matching is disabled.");
-    g_hRedlistEnabled = CreateConVar("redlist", "1", "Enable/Disable redlist features.", _, true, 0.0, true, 1.0);
     g_hBlacklistMinLen = CreateConVar("filters_blacklist_minlen", "8", "Minimum message length to check blacklist words.");
     g_hFiltersChristmas = CreateConVar("filters_christmas", "0", "If 1, red chat is {axis} and blue chat is {green}.");
     g_hFiltersTeamChat = CreateConVar("teamchat", "0", "If 1, normal chat is sent to the sender's team only.");
@@ -398,13 +377,11 @@ public void OnPluginStart()
         "If 1, chat filters are case-sensitive (exact casing must match)"
     );
     HookConVarChange(g_sChatMode2, Filters_OnFilterModeChanged);
-    HookConVarChange(g_hRedlistEnabled, Filters_OnRedlistChanged);
     
     // Initialize cookies
     g_hCookieWhitelist = RegClientCookie("filter_whitelist", "Player is whitelisted from all filters", CookieAccess_Protected);
     g_hCookieFilterWhitelist = RegClientCookie("filter_filterwhitelist", "Player is whitelisted from word filters only", CookieAccess_Protected);
     g_hCookieBlacklist = RegClientCookie("filter_blacklist", "Player is blacklisted from sending messages", CookieAccess_Protected);
-    g_hCookieredlist = RegClientCookie("filter_redlist", "Player cannot hear blacklisted clients", CookieAccess_Protected);
     g_hCookieNameColor = RegClientCookie("filter_namecolor", "Player's custom chat name color", CookieAccess_Protected);
     
     // Register admin commands for managing player states
@@ -418,9 +395,6 @@ public void OnPluginStart()
     RegAdminCmd("sm_unblacklist", Command_UnBlacklist, ADMFLAG_CHAT, "sm_unblacklist <player> - Removes blacklist from a player");
     RegAdminCmd("sm_whitelists", Command_ListWhitelists, ADMFLAG_CHAT, "sm_whitelists - Lists whitelisted players");
     RegAdminCmd("sm_blacklists", Command_ListBlacklists, ADMFLAG_CHAT, "sm_blacklists - Lists blacklisted players");
-    RegAdminCmd("sm_redlist", Command_redlist, ADMFLAG_CHAT, "sm_redlist <player> - redlist a player (can't hear blacklisted clients)");
-    RegAdminCmd("sm_unredlist", Command_Unredlist, ADMFLAG_CHAT, "sm_unredlist <player> - Removes redlist from a player");
-    RegAdminCmd("sm_redlists", Command_Listredlists, ADMFLAG_CHAT, "sm_redlists - Lists redlisted players");
     RegAdminCmd("sm_filtershelp", Command_FiltersHelp, ADMFLAG_CHAT, "sm_filtershelp - Shows filters convar help");
     RegConsoleCmd("sm_filters_debug", Command_FiltersDebug, "Show debug stats for filters");
     RegConsoleCmd("sm_colors", Command_Colors, "Show available chat colors");
@@ -449,15 +423,12 @@ public void OnPluginStart()
             g_PlayerState[i].isWhitelisted = false;
             g_PlayerState[i].isFilterWhitelisted = false;
             g_PlayerState[i].isBlacklisted = false;
-            g_PlayerState[i].isredlisted = false;
             g_NameColors[i][0] = '\0';
         }
 
         Filters_ResetExternalStats(i);
         Filters_UpdateExternalStats(i);
     }
-
-    Filters_UpdateVoiceOverrides();
 }
 
 public void OnConfigsExecuted()
@@ -1057,8 +1028,7 @@ enum struct ChatContext
 enum FilterStatusList
 {
     FilterStatus_Whitelist = 0,
-    FilterStatus_Blacklist,
-    FilterStatus_redlist
+    FilterStatus_Blacklist
 };
 
 public Action OnClientSayCommand(int client, const char[] command, const char[] sArgs)
@@ -1110,7 +1080,7 @@ public Action OnClientSayCommand(int client, const char[] command, const char[] 
     BuildMessageColorTag(client, messageColorTag, sizeof(messageColorTag));
 
     char output[256];
-    Format(output, sizeof(output), "%s%s%s%N%s: %s", messageColorTag, dead, nameColorTag, client, messageColorTag, sArgs);
+    Format(output, sizeof(output), "%s%s%s%N%s : %s", messageColorTag, dead, nameColorTag, client, messageColorTag, sArgs);
 
     ApplyFiltersIfNeeded(output, sizeof(output), context);
 
@@ -1344,7 +1314,6 @@ void Filters_PrintStatusList(int client, FilterStatusList status)
     {
         case FilterStatus_Whitelist: strcopy(label, sizeof(label), "Whitelisted");
         case FilterStatus_Blacklist: strcopy(label, sizeof(label), "Blacklisted");
-        case FilterStatus_redlist: strcopy(label, sizeof(label), "redlisted");
         default: strcopy(label, sizeof(label), "Players");
     }
 
@@ -1369,10 +1338,6 @@ void Filters_PrintStatusList(int client, FilterStatusList status)
             continue;
         }
         if (status == FilterStatus_Blacklist && !g_PlayerState[i].isBlacklisted)
-        {
-            continue;
-        }
-        if (status == FilterStatus_redlist && !g_PlayerState[i].isredlisted)
         {
             continue;
         }
@@ -1433,9 +1398,8 @@ bool HandleListStatusCommand(int client, const char[] sArgs)
 
     bool listWhitelist = StrEqual(commandToken, "/whitelists", false);
     bool listBlacklist = StrEqual(commandToken, "/blacklists", false);
-    bool listredlist = StrEqual(commandToken, "/redlists", false);
 
-    if (!listWhitelist && !listBlacklist && !listredlist)
+    if (!listWhitelist && !listBlacklist)
     {
         return false;
     }
@@ -1450,13 +1414,9 @@ bool HandleListStatusCommand(int client, const char[] sArgs)
     {
         Filters_PrintStatusList(client, FilterStatus_Whitelist);
     }
-    else if (listBlacklist)
-    {
-        Filters_PrintStatusList(client, FilterStatus_Blacklist);
-    }
     else
     {
-        Filters_PrintStatusList(client, FilterStatus_redlist);
+        Filters_PrintStatusList(client, FilterStatus_Blacklist);
     }
     return true;
 }
@@ -1478,7 +1438,7 @@ bool TryHandleTeamChat(int client, const char[] command, const char[] sArgs, con
     BuildMessageColorTag(client, messageColorTag, sizeof(messageColorTag));
 
     char output[256];
-    Format(output, sizeof(output), "%s%s%s %s%N%s: %s", messageColorTag, deadPrefix, tag, colorTag, client, messageColorTag, sArgs);
+    Format(output, sizeof(output), "%s%s%s %s%N%s : %s", messageColorTag, deadPrefix, tag, colorTag, client, messageColorTag, sArgs);
     bool cordMode = GetConVarInt(g_sChatMode2) != 0;
     if (cordMode)
     {
@@ -1486,7 +1446,7 @@ bool TryHandleTeamChat(int client, const char[] command, const char[] sArgs, con
         {
             for (int i = 1; i <= MaxClients; i++)
             {
-                if (IsClientInGame(i) && g_PlayerState[i].isBlacklisted && Filters_ShouldReceiveChat(i, client))
+                if (IsClientInGame(i) && g_PlayerState[i].isBlacklisted && Filters_ShouldReceiveChat(i))
                 {
                     Filters_SendChatToReceiver(i, client, output);
                 }
@@ -1507,7 +1467,7 @@ bool TryHandleTeamChat(int client, const char[] command, const char[] sArgs, con
             {
                 continue;
             }
-            if (!Filters_ShouldReceiveChat(i, client))
+            if (!Filters_ShouldReceiveChat(i))
             {
                 continue;
             }
@@ -1544,7 +1504,7 @@ bool TryHandleTeamChat(int client, const char[] command, const char[] sArgs, con
 
         for (int i = 1; i <= MaxClients; i++)
         {
-            if (!IsClientInGame(i) || !Filters_ShouldReceiveChat(i, client))
+            if (!IsClientInGame(i) || !Filters_ShouldReceiveChat(i))
             {
                 continue;
             }
@@ -1622,31 +1582,16 @@ void BuildMessageColorTag(int client, char[] colorTag, int length)
     strcopy(colorTag, length, "{default}");
 }
 
-static bool Filters_ShouldReceiveChat(int receiver, int sender)
+static bool Filters_ShouldReceiveChat(int receiver)
 {
-    if (receiver <= 0 || !IsClientInGame(receiver))
-    {
-        return false;
-    }
-
-    if (!Filters_RedlistEnabled())
-    {
-        return true;
-    }
-
-    if (!g_PlayerState[receiver].isredlisted)
-    {
-        return true;
-    }
-
-    return (sender > 0 && sender <= MaxClients && g_PlayerState[sender].isredlisted);
+    return (receiver > 0 && IsClientInGame(receiver));
 }
 
 static void Filters_PrintToChatAll(const char[] message)
 {
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!Filters_ShouldReceiveChat(i, 0))
+        if (!Filters_ShouldReceiveChat(i))
         {
             continue;
         }
@@ -1661,19 +1606,6 @@ static void Filters_SendChatToReceiver(int receiver, int sender, const char[] me
         return;
     }
 
-    if (Filters_RedlistEnabled()
-        && sender > 0
-        && sender <= MaxClients
-        && g_PlayerState[sender].isredlisted
-        && !g_PlayerState[receiver].isredlisted)
-    {
-        if (g_PlayerState[receiver].isWhitelisted)
-        {
-            CPrintToChatEx(receiver, sender, "{axis}[Fake] %s", message);
-        }
-        return;
-    }
-
     CPrintToChatEx(receiver, sender, "%s", message);
 }
 
@@ -1681,61 +1613,11 @@ static void Filters_PrintToChatAllEx(int sender, const char[] message)
 {
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!Filters_ShouldReceiveChat(i, sender))
+        if (!Filters_ShouldReceiveChat(i))
         {
             continue;
         }
         Filters_SendChatToReceiver(i, sender, message);
-    }
-}
-
-void Filters_UpdateVoiceOverrides()
-{
-    bool cordMode = GetConVarInt(g_sChatMode2) != 0;
-    bool redlistEnabled = Filters_RedlistEnabled();
-    for (int sender = 1; sender <= MaxClients; sender++)
-    {
-        if (!IsClientInGame(sender))
-        {
-            continue;
-        }
-
-        bool senderBlacklisted = g_PlayerState[sender].isBlacklisted;
-        for (int receiver = 1; receiver <= MaxClients; receiver++)
-        {
-            if (receiver == sender || !IsClientInGame(receiver))
-            {
-                continue;
-            }
-
-            bool shouldBlock = false;
-            if (redlistEnabled && g_PlayerState[receiver].isredlisted)
-            {
-                shouldBlock = !g_PlayerState[sender].isredlisted;
-            }
-            else if (cordMode)
-            {
-                bool receiverBlacklisted = g_PlayerState[receiver].isBlacklisted;
-                bool receiverWhitelisted = g_PlayerState[receiver].isWhitelisted;
-                shouldBlock = receiverBlacklisted
-                    ? !senderBlacklisted
-                    : (senderBlacklisted && !receiverBlacklisted && !receiverWhitelisted);
-            }
-
-            if (shouldBlock)
-            {
-                if (!g_VoiceBlocked[receiver][sender])
-                {
-                    SetListenOverride(receiver, sender, Listen_No);
-                    g_VoiceBlocked[receiver][sender] = true;
-                }
-            }
-            else if (g_VoiceBlocked[receiver][sender])
-            {
-                SetListenOverride(receiver, sender, Listen_Default);
-                g_VoiceBlocked[receiver][sender] = false;
-            }
-        }
     }
 }
 
@@ -1758,7 +1640,7 @@ bool HandleCordModeBlacklistedChat(int client, const char[] message, const ChatC
 
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (IsClientInGame(i) && g_PlayerState[i].isBlacklisted && Filters_ShouldReceiveChat(i, client))
+        if (IsClientInGame(i) && g_PlayerState[i].isBlacklisted && Filters_ShouldReceiveChat(i))
         {
             Filters_SendChatToReceiver(i, client, message);
         }
@@ -1800,7 +1682,7 @@ bool HandleEnabledChat(int client, const char[] message, const ChatContext conte
             bool prefixedReady = false;
             for (int i = 1; i <= MaxClients; i++)
             {
-                if (!IsClientInGame(i) || !Filters_ShouldReceiveChat(i, client))
+                if (!IsClientInGame(i) || !Filters_ShouldReceiveChat(i))
                 {
                     continue;
                 }
@@ -1855,7 +1737,7 @@ bool HandleEnabledChat(int client, const char[] message, const ChatContext conte
             {
                 continue;
             }
-            if (!Filters_ShouldReceiveChat(i, client))
+            if (!Filters_ShouldReceiveChat(i))
             {
                 continue;
             }
@@ -2133,7 +2015,7 @@ void LoadFilterConfig()
                 kv.GetString(NULL_STRING, status, sizeof(status));
                 
                 // Validate status type
-                if (StrEqual(status, "whitelist") || StrEqual(status, "blacklist") || StrEqual(status, "redlist") || StrEqual(status, "filter_whitelist"))
+                if (StrEqual(status, "whitelist") || StrEqual(status, "blacklist") || StrEqual(status, "filter_whitelist"))
                 {
                     strcopy(g_ForcedStatusSteamIDs[g_ForcedStatusCount], 32, steamid);
                     strcopy(g_ForcedStatusTypes[g_ForcedStatusCount], 32, status);
@@ -2309,7 +2191,6 @@ void CreateDefaultConfig(const char[] path)
     file.WriteLine("    {");
     file.WriteLine("        \"STEAM_0:0:12345678\"    \"whitelist\"");
     file.WriteLine("        \"STEAM_0:1:87654321\"    \"blacklist\"");
-    file.WriteLine("        \"STEAM_0:0:33445566\"    \"redlist\"");
     file.WriteLine("        \"STEAM_0:0:11223344\"    \"filter_whitelist\"");
     file.WriteLine("    }");
     file.WriteLine("    \"commands\"");
@@ -2392,13 +2273,6 @@ void ProcessCookies(int client)
                     g_PlayerState[client].isBlacklisted = true;
                     return;
                 }
-                else if (StrEqual(g_ForcedStatusTypes[i], "redlist"))
-                {
-                    PrintToServer("[FILTERS] %N is force redlisted (from config)", client);
-                    g_PlayerState[client].isredlisted = true;
-                    SetClientCookie(client, g_hCookieredlist, "1");
-                    return;
-                }
                 else if (StrEqual(g_ForcedStatusTypes[i], "filter_whitelist"))
                 {
                     PrintToServer("[FILTERS] %N is force filter whitelisted (from config)", client);
@@ -2442,172 +2316,6 @@ void ProcessCookies(int client)
     {
         g_PlayerState[client].isBlacklisted = false;
     }
-
-    GetClientCookie(client, g_hCookieredlist, cookie, sizeof(cookie));
-    if (StrEqual(cookie, "1"))
-    {
-        PrintToServer("[FILTERS] %N is redlisted", client);
-        g_PlayerState[client].isredlisted = true;
-    }
-    else
-    {
-        g_PlayerState[client].isredlisted = false;
-    }
-
-}
-
-static void Filters_StartAutoRedlistCheck(int client)
-{
-    if (client <= 0 || !IsClientInGame(client) || IsFakeClient(client))
-    {
-        return;
-    }
-
-    if (g_hFiltersDb == null || !g_bDbReady)
-    {
-        return;
-    }
-
-    char steamId64[32];
-    if (GetClientAuthId(client, AuthId_SteamID64, steamId64, sizeof(steamId64)))
-    {
-        char query[256];
-        Format(query, sizeof(query), "SELECT kills FROM whaletracker WHERE steamid = '%s' LIMIT 1", steamId64);
-        g_hFiltersDb.Query(Filters_AutoRedlistKillsCallback, query, GetClientUserId(client));
-    }
-
-    char steamId2[32];
-    if (GetClientAuthId(client, AuthId_Steam2, steamId2, sizeof(steamId2)))
-    {
-        char query[256];
-        Format(query, sizeof(query), "SELECT rapes_given FROM hugs_stats WHERE steamid = '%s' LIMIT 1", steamId2);
-        g_hFiltersDb.Query(Filters_AutoRedlistRapesCallback, query, GetClientUserId(client));
-    }
-}
-
-static bool Filters_IsForcedRedlist(int client)
-{
-    char steamid[32];
-    if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))
-    {
-        return false;
-    }
-
-    for (int i = 0; i < g_ForcedStatusCount; i++)
-    {
-        if (StrEqual(steamid, g_ForcedStatusSteamIDs[i]) && StrEqual(g_ForcedStatusTypes[i], "redlist"))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static bool Filters_IsAdminClient(int client)
-{
-    if (client <= 0 || client > MaxClients)
-    {
-        return false;
-    }
-
-    return (GetUserFlagBits(client) != 0);
-}
-
-static void Filters_EvaluateAutoRedlist(int client)
-{
-    if (client <= 0 || !IsClientInGame(client) || IsFakeClient(client))
-    {
-        return;
-    }
-
-    if (g_PlayerState[client].isWhitelisted)
-    {
-        return;
-    }
-
-    if (Filters_IsAdminClient(client) && !Filters_IsForcedRedlist(client))
-    {
-        if (g_PlayerState[client].isredlisted)
-        {
-            PerformUnredlist(0, client);
-        }
-        return;
-    }
-
-    bool hasRapes = g_AutoRedlistGotRapes[client];
-
-    if (!hasRapes)
-    {
-        return;
-    }
-
-    int rapes = g_AutoRedlistRapes[client];
-    bool belowThreshold = rapes < REDLIST_RAPES_THRESHOLD;
-
-    if (!g_PlayerState[client].isredlisted)
-    {
-        if (belowThreshold)
-        {
-            Performredlist(0, client);
-        }
-        return;
-    }
-
-    if (!belowThreshold && !Filters_IsForcedRedlist(client))
-    {
-        PerformUnredlist(0, client);
-    }
-}
-
-public void Filters_AutoRedlistKillsCallback(Database db, DBResultSet results, const char[] error, any userId)
-{
-    if (error[0])
-    {
-        LogError("[Filters] Failed to query WhaleTracker kills: %s", error);
-        return;
-    }
-
-    int client = GetClientOfUserId(userId);
-    if (client <= 0 || !IsClientInGame(client) || IsFakeClient(client))
-    {
-        return;
-    }
-
-    int kills = 0;
-    if (results != null && results.FetchRow())
-    {
-        kills = results.FetchInt(0);
-    }
-
-    g_AutoRedlistKills[client] = kills;
-    g_AutoRedlistGotKills[client] = true;
-    Filters_EvaluateAutoRedlist(client);
-}
-
-public void Filters_AutoRedlistRapesCallback(Database db, DBResultSet results, const char[] error, any userId)
-{
-    if (error[0])
-    {
-        LogError("[Filters] Failed to query hugs rapes: %s", error);
-        return;
-    }
-
-    int client = GetClientOfUserId(userId);
-    if (client <= 0 || !IsClientInGame(client) || IsFakeClient(client))
-    {
-        return;
-    }
-
-    int rapes = 0;
-    if (results != null && results.FetchRow())
-    {
-        rapes = results.FetchInt(0);
-    }
-
-    g_AutoRedlistRapes[client] = rapes;
-    g_AutoRedlistGotRapes[client] = true;
-    Filters_EvaluateAutoRedlist(client);
 }
 
 public void OnClientPostAdminCheck(int client)
@@ -2615,12 +2323,6 @@ public void OnClientPostAdminCheck(int client)
     if (AreClientCookiesCached(client) && !g_PlayerState[client].cookiesProcessed)
     {
         ProcessCookies(client);
-        Filters_UpdateVoiceOverrides();
-    }
-
-    if (!IsFakeClient(client))
-    {
-        Filters_StartAutoRedlistCheck(client);
     }
 
     Filters_UpdateExternalStats(client);
@@ -2632,18 +2334,12 @@ public void OnClientCookiesCached(int client)
     {
         ProcessCookies(client);
     }
-    Filters_UpdateVoiceOverrides();
     Filters_UpdateExternalStats(client);
 }
 
 public void Filters_OnFilterModeChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    Filters_UpdateVoiceOverrides();
-}
-
-public void Filters_OnRedlistChanged(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-    Filters_UpdateVoiceOverrides();
+    // voice overrides removed
 }
 
 public void OnClientPutInServer(int client)
@@ -2657,15 +2353,9 @@ public void OnClientDisconnect(int client)
     g_PlayerState[client].isWhitelisted = false;
     g_PlayerState[client].isFilterWhitelisted = false;
     g_PlayerState[client].isBlacklisted = false;
-    g_PlayerState[client].isredlisted = false;
     g_PlayerState[client].cookiesProcessed = false;
     g_NameColors[client][0] = '\0';
     Filters_ResetExternalStats(client);
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        g_VoiceBlocked[client][i] = false;
-        g_VoiceBlocked[i][client] = false;
-    }
     Filters_AnnouncePlayerEvent(client, false);
 }
 
@@ -2686,13 +2376,7 @@ public void OnPluginEnd()
 
 public any Native_Filters_IsRedlisted(Handle plugin, int numParams)
 {
-    int client = GetNativeCell(1);
-    if (client <= 0 || client > MaxClients || !IsClientInGame(client))
-    {
-        return false;
-    }
-
-    return g_PlayerState[client].isredlisted;
+    return false;
 }
 
 public any Native_Filters_GetChatName(Handle plugin, int numParams)
@@ -2819,7 +2503,6 @@ void PerformWhitelist(int client, int target)
     g_PlayerState[target].isWhitelisted = true;
     SetClientCookie(target, g_hCookieWhitelist, "1");
     LogAction(client, target, "\"%L\" whitelisted \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
 }
 
 void PerformUnWhitelist(int client, int target)
@@ -2827,7 +2510,6 @@ void PerformUnWhitelist(int client, int target)
     g_PlayerState[target].isWhitelisted = false;
     SetClientCookie(target, g_hCookieWhitelist, "0");
     LogAction(client, target, "\"%L\" removed whitelist from \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
 }
 
 // ==================== FILTER WHITELIST COMMANDS ====================
@@ -3070,23 +2752,6 @@ public Action Command_ListBlacklists(int client, int args)
     return Plugin_Handled;
 }
 
-public Action Command_Listredlists(int client, int args)
-{
-    if (client <= 0)
-    {
-        return Plugin_Handled;
-    }
-
-    if (!Filters_CanUseListCommand(client))
-    {
-        CPrintToChat(client, "{default}[Filters] You do not have access to this command.");
-        return Plugin_Handled;
-    }
-
-    Filters_PrintStatusList(client, FilterStatus_redlist);
-    return Plugin_Handled;
-}
-
 public Action Command_FiltersHelp(int client, int args)
 {
     if (client <= 0)
@@ -3115,15 +2780,6 @@ public Action Command_FiltersDebug(int client, int args)
 
     int rapes = g_PlayerState[client].rapesGiven;
     int kills = g_PlayerState[client].whaleKills;
-    char redlisted[4];
-    if (g_PlayerState[client].isredlisted)
-    {
-        strcopy(redlisted, sizeof(redlisted), "yes");
-    }
-    else
-    {
-        strcopy(redlisted, sizeof(redlisted), "no");
-    }
     char over50[4];
     if (kills > 50)
     {
@@ -3134,7 +2790,7 @@ public Action Command_FiltersDebug(int client, int args)
         strcopy(over50, sizeof(over50), "no");
     }
 
-    CPrintToChat(client, "{default}[SM] Rapes sent: %d | WhaleTracker kills: %d | Kills > 50: %s | Redlisted: %s", rapes, kills, over50, redlisted);
+    CPrintToChat(client, "{default}[SM] Rapes sent: %d | WhaleTracker kills: %d | Kills > 50: %s", rapes, kills, over50);
 
     if (!g_PlayerState[client].hugsStatsLoaded || !g_PlayerState[client].whaleStatsLoaded)
     {
@@ -3149,7 +2805,6 @@ void PerformBlacklist(int client, int target)
     g_PlayerState[target].isBlacklisted = true;
     SetClientCookie(target, g_hCookieBlacklist, "1");
     LogAction(client, target, "\"%L\" blacklisted \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
 }
 
 void PerformUnBlacklist(int client, int target)
@@ -3157,119 +2812,6 @@ void PerformUnBlacklist(int client, int target)
     g_PlayerState[target].isBlacklisted = false;
     SetClientCookie(target, g_hCookieBlacklist, "0");
     LogAction(client, target, "\"%L\" removed blacklist from \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
-}
-
-// ==================== redlist COMMANDS ====================
-
-public Action Command_redlist(int client, int args)
-{
-    if (args < 1)
-    {
-        ReplyToCommand(client, "[SM] Usage: sm_redlist <player>");
-        return Plugin_Handled;
-    }
-
-    char arg[64];
-    GetCmdArg(1, arg, sizeof(arg));
-
-    char target_name[MAX_TARGET_LENGTH];
-    int target_list[MAXPLAYERS], target_count;
-    bool tn_is_ml;
-
-    if ((target_count = ProcessTargetString(
-            arg,
-            client,
-            target_list,
-            MAXPLAYERS,
-            0,
-            target_name,
-            sizeof(target_name),
-            tn_is_ml)) <= 0)
-    {
-        ReplyToTargetError(client, target_count);
-        return Plugin_Handled;
-    }
-
-    for (int i = 0; i < target_count; i++)
-    {
-        int target = target_list[i];
-        Performredlist(client, target);
-    }
-
-    if (tn_is_ml)
-    {
-        ShowActivity2(client, "[SM] ", "redlisted %s", target_name);
-    }
-    else
-    {
-        ShowActivity2(client, "[SM] ", "redlisted %s", target_name);
-    }
-
-    return Plugin_Handled;
-}
-
-public Action Command_Unredlist(int client, int args)
-{
-    if (args < 1)
-    {
-        ReplyToCommand(client, "[SM] Usage: sm_unredlist <player>");
-        return Plugin_Handled;
-    }
-
-    char arg[64];
-    GetCmdArg(1, arg, sizeof(arg));
-
-    char target_name[MAX_TARGET_LENGTH];
-    int target_list[MAXPLAYERS], target_count;
-    bool tn_is_ml;
-
-    if ((target_count = ProcessTargetString(
-            arg,
-            client,
-            target_list,
-            MAXPLAYERS,
-            0,
-            target_name,
-            sizeof(target_name),
-            tn_is_ml)) <= 0)
-    {
-        ReplyToTargetError(client, target_count);
-        return Plugin_Handled;
-    }
-
-    for (int i = 0; i < target_count; i++)
-    {
-        int target = target_list[i];
-        PerformUnredlist(client, target);
-    }
-
-    if (tn_is_ml)
-    {
-        ShowActivity2(client, "[SM] ", "Removed redlist from %s", target_name);
-    }
-    else
-    {
-        ShowActivity2(client, "[SM] ", "Removed redlist from %s", target_name);
-    }
-
-    return Plugin_Handled;
-}
-
-void Performredlist(int client, int target)
-{
-    g_PlayerState[target].isredlisted = true;
-    SetClientCookie(target, g_hCookieredlist, "1");
-    LogAction(client, target, "\"%L\" redlisted \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
-}
-
-void PerformUnredlist(int client, int target)
-{
-    g_PlayerState[target].isredlisted = false;
-    SetClientCookie(target, g_hCookieredlist, "0");
-    LogAction(client, target, "\"%L\" removed redlist from \"%L\"", client, target);
-    Filters_UpdateVoiceOverrides();
 }
 
 void CPrintToChatTeam(int team, int sender, const char[] message)
@@ -3283,7 +2825,7 @@ void CPrintToChatTeam(int team, int sender, const char[] message)
         {
             continue;
         }
-        if (!Filters_ShouldReceiveChat(client, sender))
+        if (!Filters_ShouldReceiveChat(client))
         {
             continue;
         }

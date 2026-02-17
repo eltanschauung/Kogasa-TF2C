@@ -11,7 +11,6 @@ cp_dustdouble_v1
 cp_forest_of_magic_2_a3
 cp_gorge_reborn_smissmas_rc1
 cp_kogasaville_a2
-workshop/ctf_masadamaze_b2.ugc2919313730
 cp_mann_mall_b3
 cp_mojave_b2
 cp_obscure_final
@@ -134,8 +133,6 @@ koth_spillway_rc3a
 koth_stupidcar_b1
 koth_watchtower
 koth_viaduct
-2koth_abbey
-koth_winter_ridge
 koth_rotunda
 koth_minnesota_a2
 koth_bagel_rc11
@@ -152,9 +149,6 @@ multiarena_tundra_a2a
 
 // Player Destruction
 pd_humanvillage_a4
-pd_watergate
-pd_oranges_rc1_invasion
-pd_selbyen
 // PIPEBALL
 pipeball_canyon_b1
 
@@ -216,15 +210,8 @@ sd_doomsday
 4arena_flask
 4arena_floodgate
 4dom_hydro
-4dom_krepost
 4koth_frigid
 4plr_sisyphus
-arena_lumberyard
-arena_offblast_final
-arena_ravine
-arena_watchtower
-arena_well
-cp_degrootkeep
 cp_dustbowl
 cp_foundry
 cp_freight_final1
@@ -262,8 +249,6 @@ vip_gravelpit_night_b1
 
 // Arena
 arena_byre
-
-arena_farm_feud_b1
 arena_hardhat_b2a
 // COOLER
 garbage_day

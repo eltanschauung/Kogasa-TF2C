@@ -34,6 +34,8 @@ public Plugin myinfo =
 };
 
 int g_iClass[MAXPLAYERS + 1];
+bool g_bForcedRespawn[MAXPLAYERS + 1];
+int g_iForcedRespawnAttempts[MAXPLAYERS + 1];
 ConVar g_hEnabled;
 ConVar g_hFlags;
 ConVar g_hImmunity;
@@ -126,6 +128,8 @@ public void OnMapStart()
 public void OnClientPutInServer(int client)
 {
     g_iClass[client] = TF_CLASS_UNKNOWN;
+    g_bForcedRespawn[client] = false;
+    g_iForcedRespawnAttempts[client] = 0;
 }
 
 public void Event_PlayerSay(Event event, const char[] name, bool dontBroadcast)
@@ -155,26 +159,14 @@ public void Event_PlayerSay(Event event, const char[] name, bool dontBroadcast)
         }
     }
 
-    if (!StrEqual(lower, "!classrestrict") && !StrEqual(lower, "!classlimits") && !StrEqual(lower, "!cr") && !StrEqual(lower, "!cl"))
+    // !classlimits/!cl are already handled by sm_classlimits/sm_cl.
+    // Keep only legacy aliases here to avoid duplicate output.
+    if (!StrEqual(lower, "!classrestrict") && !StrEqual(lower, "!cr"))
     {
         return;
     }
 
-    char limitText[32];
-    for (int classId = TF_CLASS_SCOUT; classId <= TF_CLASS_CIVILIAN; classId++)
-    {
-        if (classId == TF_CLASS_CIVILIAN || classId <= TF_CLASS_ENGINEER)
-        {
-            if (!ShouldDisplayClassInList(classId))
-            {
-                continue;
-            }
-            FormatClassLimitText(classId, limitText, sizeof(limitText));
-            CPrintToChat(client, "{olive}  %s{default}: {gold}%s{default}", g_ClassNames[classId], limitText);
-        }
-    }
-    UpdateGameModeName();
-    CPrintToChat(client, "{olive}[Class Limits]{default} Current gamemode: {yellow}%s{default}", g_sGameMode);
+    Command_ShowClassLimits(client, 0);
 }
 
 public Action Command_ShowClassLimits(int client, int args)
@@ -267,11 +259,29 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
     int iClient = GetClientOfUserId(event.GetInt("userid")),
         iTeam   = GetClientTeam(iClient);
 
+    if (iClient <= 0 || !IsClientInGame(iClient))
+    {
+        return;
+    }
+
+    // This spawn was triggered by our own forced class respawn; don't recurse.
+    if (g_bForcedRespawn[iClient])
+    {
+        g_bForcedRespawn[iClient] = false;
+        return;
+    }
+
     g_iClass[iClient] = view_as<int>(TF2_GetPlayerClass(iClient));
 
     int limit;
     if (!IsClassLimitImmune(iClient) && IsClassAtLimit(iTeam, g_iClass[iClient], limit))
     {
+        // Safety: avoid runaway respawn loops if class switching cannot resolve.
+        if (g_iForcedRespawnAttempts[iClient] >= 3)
+        {
+            return;
+        }
+
         //ShowVGUIPanel(iClient, iTeam == TF_TEAM_BLU ? "class_blue" : "class_red");
         NotifyClassRestricted(iClient, g_iClass[iClient], limit);
         if (g_iClass[iClient] >= 0 && g_iClass[iClient] < sizeof(g_sSounds) && g_sSounds[g_iClass[iClient]][0])
@@ -279,6 +289,10 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
             EmitSoundToClient(iClient, g_sSounds[g_iClass[iClient]]);
         }
         PickClass(iClient);
+    }
+    else
+    {
+        g_iForcedRespawnAttempts[iClient] = 0;
     }
 }
 
@@ -342,7 +356,7 @@ static bool GetTeamTopScoreThreshold(int team, int &threshold)
 
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsClientInGame(i) || GetClientTeam(i) != team)
+        if (!IsClientInGame(i) || IsFakeClient(i) || GetClientTeam(i) != team)
         {
             continue;
         }
@@ -378,7 +392,7 @@ static bool GetTeamTopScoreThreshold(int team, int &threshold)
 
 static bool IsTopTeamScorer(int client)
 {
-    if (client <= 0 || !IsClientInGame(client))
+    if (client <= 0 || !IsClientInGame(client) || IsFakeClient(client))
     {
         return false;
     }
@@ -408,6 +422,20 @@ static bool IsClassLimitImmune(int client)
     return g_hImmunity.BoolValue && IsImmune(client);
 }
 
+static int GetHumanTeamClientCount(int team)
+{
+    int count = 0;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (!IsClientInGame(i) || IsFakeClient(i) || GetClientTeam(i) != team)
+        {
+            continue;
+        }
+        count++;
+    }
+    return count;
+}
+
 bool IsClassAtLimit(int iTeam, int iClass, int &limitOut)
 {
     limitOut = -1;
@@ -431,7 +459,7 @@ bool IsClassAtLimit(int iTeam, int iClass, int &limitOut)
 
     if (flLimit > 0.0 && flLimit < 1.0)
     {
-        limitOut = RoundToNearest(flLimit * GetTeamClientCount(iTeam));
+        limitOut = RoundToNearest(flLimit * GetHumanTeamClientCount(iTeam));
     }
     else
     {
@@ -448,7 +476,7 @@ bool IsClassAtLimit(int iTeam, int iClass, int &limitOut)
 
     for (int i = 1, iCount = 0; i <= MaxClients; i++)
     {
-        if (!IsClientInGame(i) || GetClientTeam(i) != iTeam || view_as<int>(TF2_GetPlayerClass(i)) != iClass)
+        if (!IsClientInGame(i) || IsFakeClient(i) || GetClientTeam(i) != iTeam || view_as<int>(TF2_GetPlayerClass(i)) != iClass)
         {
             continue;
         }
@@ -481,6 +509,11 @@ bool IsImmune(int iClient)
 
 void PickClass(int iClient)
 {
+    if (iClient <= 0 || !IsClientInGame(iClient))
+    {
+        return;
+    }
+
     // Loop through all classes, starting at random class
     for (int i = GetRandomInt(TF_CLASS_SCOUT, TF_CLASS_CIVILIAN), iClass = i, iTeam = GetClientTeam(iClient);;)
     {
@@ -494,6 +527,8 @@ void PickClass(int iClient)
         int limit;
         if (!IsClassAtLimit(iTeam, i, limit))
         {
+            g_iForcedRespawnAttempts[iClient]++;
+            g_bForcedRespawn[iClient] = true;
             TF2_SetPlayerClass(iClient, view_as<TFClassType>(i));
             TF2_RespawnPlayer(iClient);
             g_iClass[iClient] = i;
