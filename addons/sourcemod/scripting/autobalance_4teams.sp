@@ -9,6 +9,17 @@
 #define CHECK_INTERVAL 5.0
 #define TEAM_RED 2
 #define TEAM_BLUE 3
+#define TEAM_GREEN 4
+#define TEAM_YELLOW 5
+#define GAME_TEAM_COUNT 4
+
+static const int g_GameTeams[GAME_TEAM_COUNT] =
+{
+    TEAM_RED,
+    TEAM_BLUE,
+    TEAM_GREEN,
+    TEAM_YELLOW
+};
 
 Handle g_hImmunityCookie;
 bool g_bClearImmunity[MAXPLAYERS + 1];
@@ -19,10 +30,10 @@ char g_sLogPath[PLATFORM_MAX_PATH];
 
 public Plugin myinfo =
 {
-    name = "autobalance",
+    name = "autobalance_4teams",
     author = "Hombre",
-    description = "Moves low-scoring players when teams are imbalanced.",
-    version = "1.1",
+    description = "Moves players when 4 teams are imbalanced.",
+    version = "1.2",
     url = ""
 };
 
@@ -66,41 +77,95 @@ public void OnClientCookiesCached(int client)
 
 public Action Timer_Autobalance(Handle timer)
 {
-    int redCount = CountTeamPlayers(TEAM_RED);
-    int blueCount = CountTeamPlayers(TEAM_BLUE);
+    int teamCounts[6];
 
-    int diff = redCount - blueCount;
-    int absDiff = (diff < 0) ? -diff : diff;
-    int bigTeam = 0;
-    if (absDiff >= 2)
+    for (int i = 0; i < GAME_TEAM_COUNT; i++)
     {
-        bigTeam = (diff > 0) ? TEAM_RED : TEAM_BLUE;
+        int team = g_GameTeams[i];
+        int count = CountTeamPlayersRaw(team);
+        teamCounts[team] = count;
     }
 
-    if (bigTeam == 0)
+    int activeTeams[GAME_TEAM_COUNT];
+    int activeCount = 0;
+    activeTeams[activeCount++] = TEAM_RED;
+    activeTeams[activeCount++] = TEAM_BLUE;
+
+    // Minimal mode-guard:
+    // If either green/yellow has players, treat mode as 4-team and include both.
+    if (teamCounts[TEAM_GREEN] > 0 || teamCounts[TEAM_YELLOW] > 0)
+    {
+        activeTeams[activeCount++] = TEAM_GREEN;
+        activeTeams[activeCount++] = TEAM_YELLOW;
+    }
+
+    int biggestTeam = 0;
+    int smallestTeam = 0;
+    int biggestCount = -1;
+    int smallestCount = 99999;
+
+    for (int i = 0; i < activeCount; i++)
+    {
+        int team = activeTeams[i];
+        int count = teamCounts[team];
+        if (count > biggestCount)
+        {
+            biggestCount = count;
+            biggestTeam = team;
+        }
+
+        if (count < smallestCount)
+        {
+            smallestCount = count;
+            smallestTeam = team;
+        }
+    }
+
+    if (biggestTeam == 0 || smallestTeam == 0 || biggestTeam == smallestTeam)
     {
         return Plugin_Continue;
     }
 
-    bool forceBalance = (absDiff > 2);
-    LogBalance("Imbalance detected: red=%d blue=%d bigTeam=%s force=%s", redCount, blueCount, (bigTeam == TEAM_RED) ? "RED" : "BLU", forceBalance ? "yes" : "no");
-    PrintToServer("Imbalance detected: red=%d blue=%d bigTeam=%s force=%s", redCount, blueCount, (bigTeam == TEAM_RED) ? "RED" : "BLU", forceBalance ? "yes" : "no");
+    int diff = biggestCount - smallestCount;
+    if (diff < 2)
+    {
+        return Plugin_Continue;
+    }
+
+    bool forceBalance = (diff > 2);
+    char fromTeamName[16];
+    char toTeamName[16];
+    AB_GetTeamName(biggestTeam, fromTeamName, sizeof(fromTeamName));
+    AB_GetTeamName(smallestTeam, toTeamName, sizeof(toTeamName));
+    LogBalance(
+        "Imbalance: RED=%d BLU=%d GREEN=%d YELLOW=%d | from=%s(%d) to=%s(%d) force=%s",
+        teamCounts[TEAM_RED], teamCounts[TEAM_BLUE], teamCounts[TEAM_GREEN], teamCounts[TEAM_YELLOW],
+        fromTeamName, biggestCount, toTeamName, smallestCount,
+        forceBalance ? "yes" : "no"
+    );
+    PrintToServer(
+        "[autobalance_4teams] Imbalance: RED=%d BLU=%d GREEN=%d YELLOW=%d | from=%s(%d) to=%s(%d) force=%s",
+        teamCounts[TEAM_RED], teamCounts[TEAM_BLUE], teamCounts[TEAM_GREEN], teamCounts[TEAM_YELLOW],
+        fromTeamName, biggestCount, toTeamName, smallestCount,
+        forceBalance ? "yes" : "no"
+    );
 
     int totalScore = 0;
     int totalPlayers = 0;
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsEligiblePlayer(i, bigTeam))
+        if (!IsEligiblePlayer(i, biggestTeam))
         {
             continue;
         }
+
         totalScore += GetClientScore(i);
         totalPlayers++;
     }
 
     if (totalPlayers == 0)
     {
-        LogBalance("No eligible players on %s team.", (bigTeam == TEAM_RED) ? "RED" : "BLU");
+        LogBalance("No eligible players on %s team.", fromTeamName);
         return Plugin_Continue;
     }
 
@@ -108,9 +173,11 @@ public Action Timer_Autobalance(Handle timer)
 
     int candidates[MAXPLAYERS];
     int candidateCount = 0;
+
+    // Pass 1: strict checks (except when force-balance mode is active).
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsEligiblePlayer(i, bigTeam))
+        if (!IsEligiblePlayer(i, biggestTeam))
         {
             continue;
         }
@@ -123,47 +190,80 @@ public Action Timer_Autobalance(Handle timer)
 
         if (!forceBalance)
         {
-            if (GetRandomInt(0, 1)) // A 50% chance to ignore these conditions to make autobalances less infrequent
+            if (IsPlayerAlive(i))
             {
-                if (IsPlayerAlive(i))
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                if (float(GetClientScore(i)) >= avg)
-                {
-                    continue;
-                }
+            if (float(GetClientScore(i)) >= avg)
+            {
+                continue;
             }
         }
 
         candidates[candidateCount++] = i;
     }
 
+    // Pass 2: if strict mode found none, relax score/alive constraints but keep class exclusions.
+    if (candidateCount == 0 && !forceBalance)
+    {
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (!IsEligiblePlayer(i, biggestTeam))
+            {
+                continue;
+            }
+
+            TFClassType cls = TF2_GetPlayerClass(i);
+            if (cls == TFClass_Engineer || cls == TFClass_Medic)
+            {
+                continue;
+            }
+
+            candidates[candidateCount++] = i;
+        }
+    }
+
     if (candidateCount == 0)
     {
-        LogBalance("No eligible candidates%s on %s team. avg=%.2f threshhold=%.2f total=%d", forceBalance ? "" : " below threshold", (bigTeam == TEAM_RED) ? "RED" : "BLU", avg, avg, totalPlayers);
+        LogBalance(
+            "No candidates on %s team. avg=%.2f total=%d force=%d",
+            fromTeamName, avg, totalPlayers, forceBalance ? 1 : 0
+        );
         return Plugin_Continue;
     }
 
     int pick = candidates[GetRandomInt(0, candidateCount - 1)];
-    int newTeam = (bigTeam == TEAM_RED) ? TEAM_BLUE : TEAM_RED;
+    int newTeam = smallestTeam;
+
     LogBalance("Autobalancing %N (%d) from %s to %s. score=%d avg=%.2f candidates=%d",
         pick,
         GetClientUserId(pick),
-        (bigTeam == TEAM_RED) ? "RED" : "BLU",
-        (newTeam == TEAM_RED) ? "RED" : "BLU",
+        fromTeamName,
+        toTeamName,
         GetClientScore(pick),
         avg,
         candidateCount);
+
+    PrintToServer(
+        "[autobalance_4teams] move %N (%d) %s -> %s | score=%d avg=%.2f candidates=%d",
+        pick,
+        GetClientUserId(pick),
+        fromTeamName,
+        toTeamName,
+        GetClientScore(pick),
+        avg,
+        candidateCount
+    );
+
     ChangeClientTeam(pick, newTeam);
     SetClientImmunity(pick, true);
 
     CreateTimer(0.1, Timer_Respawn, GetClientUserId(pick), TIMER_FLAG_NO_MAPCHANGE);
 
-    char teamName[8];
-    strcopy(teamName, sizeof(teamName), (newTeam == TEAM_RED) ? "Red" : "Blue");
-    CPrintToChatEx(pick, pick, "{lightgreen}[Server]{default} You've been autobalanced to {teamcolor}%s{default}!", teamName);
+    char teamColorName[24];
+    AB_GetTeamColorName(newTeam, teamColorName, sizeof(teamColorName));
+    CPrintToChatEx(pick, pick, "{lightgreen}[Server]{default} You've been autobalanced to %s{default}!", teamColorName);
     return Plugin_Continue;
 }
 
@@ -174,6 +274,7 @@ public Action Timer_Respawn(Handle timer, any userid)
     {
         TF2_RespawnPlayer(client);
     }
+
     return Plugin_Stop;
 }
 
@@ -195,6 +296,7 @@ static bool IsEligiblePlayer(int client, int team)
     {
         return false;
     }
+
     return true;
 }
 
@@ -245,22 +347,54 @@ static void ResetImmunityForConnectedClients()
     }
 }
 
-static int CountTeamPlayers(int team)
+static int CountTeamPlayersRaw(int team)
 {
     int count = 0;
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (IsEligiblePlayer(i, team))
+        if (!IsClientInGame(i) || IsFakeClient(i))
         {
-            count++;
+            continue;
         }
+
+        if (GetClientTeam(i) != team)
+        {
+            continue;
+        }
+
+        count++;
     }
+
     return count;
 }
 
 static int GetClientScore(int client)
 {
     return GetClientFrags(client);
+}
+
+static void AB_GetTeamName(int team, char[] buffer, int maxlen)
+{
+    switch (team)
+    {
+        case TEAM_RED: strcopy(buffer, maxlen, "RED");
+        case TEAM_BLUE: strcopy(buffer, maxlen, "BLU");
+        case TEAM_GREEN: strcopy(buffer, maxlen, "GREEN");
+        case TEAM_YELLOW: strcopy(buffer, maxlen, "YELLOW");
+        default: strcopy(buffer, maxlen, "UNKNOWN");
+    }
+}
+
+static void AB_GetTeamColorName(int team, char[] buffer, int maxlen)
+{
+    switch (team)
+    {
+        case TEAM_RED: strcopy(buffer, maxlen, "{red}Red");
+        case TEAM_BLUE: strcopy(buffer, maxlen, "{blue}Blue");
+        case TEAM_GREEN: strcopy(buffer, maxlen, "{green}Green");
+        case TEAM_YELLOW: strcopy(buffer, maxlen, "{yellow}Yellow");
+        default: strcopy(buffer, maxlen, "{default}Unknown");
+    }
 }
 
 static void LogBalance(const char[] fmt, any ...)
