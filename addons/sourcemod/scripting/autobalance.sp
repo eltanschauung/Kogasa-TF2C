@@ -123,17 +123,17 @@ public Action Timer_Autobalance(Handle timer)
 
         if (!forceBalance)
         {
-            if (IsPlayerAlive(i))
+            if (GetRandomInt(0, 1)) // A 50% chance to ignore these conditions to make autobalances less infrequent
             {
-                if (GetRandomInt(0, 1))
+                if (IsPlayerAlive(i))
                 {
                     continue;
                 }
-            }
 
-            if (float(GetClientScore(i)) >= avg)
-            {
-                continue;
+                if (float(GetClientScore(i)) >= avg)
+                {
+                    continue;
+                }
             }
         }
 
