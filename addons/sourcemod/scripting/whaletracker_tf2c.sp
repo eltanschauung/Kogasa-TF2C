@@ -17,7 +17,7 @@
 #define DB_CONFIG_DEFAULT "default"
 #define SAVE_QUERY_MAXLEN 4096
 #define MAX_CONCURRENT_SAVE_QUERIES 4
-#define WHALE_POINTS_SQL_EXPR "FLOOR((((GREATEST(damage_dealt,0) / 200.0) + GREATEST(kills,0) + FLOOR(GREATEST(assists,0) * 0.5) + GREATEST(backstabs,0) + GREATEST(headshots,0)) * 10000.0) / GREATEST(GREATEST(deaths,0), 1))"
+#define WHALE_POINTS_SQL_EXPR "CEIL((((GREATEST(damage_dealt,0) / 200.0) + (GREATEST(healing,0) / 400.0) + GREATEST(kills,0) + FLOOR(GREATEST(assists,0) * 0.5) + GREATEST(backstabs,0) + GREATEST(headshots,0)) * 10000.0) / GREATEST(GREATEST(deaths,0), 1))"
 #define WHALE_POINTS_RANK_MIN_PLAYTIME 7200
 #define WHALE_POINTS_MIN_KD_SUM 1000
 #define WHALE_LEADERBOARD_PAGE_SIZE 10
@@ -266,8 +266,9 @@ static void TouchClientLastSeen(int client)
 
 void ClearOnlineStats()
 {
-    static const char deleteQuery[] = "DELETE FROM whaletracker_online";
-    QueueSaveQuery(deleteQuery, 0, false);
+    char deleteOnline[128];
+    Format(deleteOnline, sizeof(deleteOnline), "DELETE FROM whaletracker_online WHERE host_port = %d", g_iHostPort);
+    QueueSaveQuery(deleteOnline, 0, false);
 
     char deleteServer[128];
     Format(deleteServer, sizeof(deleteServer), "DELETE FROM whaletracker_servers WHERE port = %d", g_iHostPort);
@@ -280,8 +281,8 @@ void RemoveOnlineStats(int client)
     if (!GetClientAuthId(client, AuthId_SteamID64, steamId, sizeof(steamId)))
         return;
 
-    char query[128];
-    Format(query, sizeof(query), "DELETE FROM whaletracker_online WHERE steamid = '%s'", steamId);
+    char query[192];
+    Format(query, sizeof(query), "DELETE FROM whaletracker_online WHERE steamid = '%s' AND host_port = %d", steamId, g_iHostPort);
     QueueSaveQuery(query, 0, false);
 }
 
@@ -581,7 +582,7 @@ static void WhaleTracker_ScheduleReconnect(float delay)
         g_hDatabase = null;
     }
 
-    g_hReconnectTimer = CreateTimer(delay, WhaleTracker_ReconnectTimer, _, TIMER_FLAG_NO_MAPCHANGE);
+    g_hReconnectTimer = CreateTimer(delay, WhaleTracker_ReconnectTimer);
 }
 
 public Action WhaleTracker_ReconnectTimer(Handle timer, any data)
@@ -1307,7 +1308,7 @@ static void ResetLifeCounters(WhaleStats stats)
     stats.currentUbersLife = 0;
 }
 
-static void ApplyKillStats(WhaleStats stats, bool backstab, bool medicDrop)
+static void ApplyKillStats(WhaleStats stats, bool backstab, bool headshot, bool medicDrop)
 {
     stats.kills++;
 
@@ -1321,6 +1322,10 @@ static void ApplyKillStats(WhaleStats stats, bool backstab, bool medicDrop)
     if (backstab)
     {
         stats.totalBackstabs++;
+    }
+    if (headshot)
+    {
+        stats.totalHeadshots++;
     }
     if (medicDrop)
     {
@@ -1411,6 +1416,11 @@ static void RunSaveQuerySync(const char[] query, int userId)
         {
             LogError("[WhaleTracker] Failed to save stats synchronously: %s", error);
         }
+
+        if (WhaleTracker_IsConnectionLostError(error))
+        {
+            WhaleTracker_ScheduleReconnect(2.0);
+        }
     }
 }
 
@@ -1471,7 +1481,7 @@ static void RequestPumpSaveQueue()
         return;
     }
 
-    g_hSavePumpTimer = CreateTimer(0.0, WhaleTracker_PumpSaveQueueTimer, _, TIMER_FLAG_NO_MAPCHANGE);
+    g_hSavePumpTimer = CreateTimer(0.0, WhaleTracker_PumpSaveQueueTimer);
 }
 
 public Action WhaleTracker_PumpSaveQueueTimer(Handle timer, any data)
@@ -1659,6 +1669,15 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsClientInGame(i) && !IsFakeClient(i))
+        {
+            SaveClientStats(i, true, true);
+        }
+    }
+
+    FlushSaveQueueSync();
     FinalizeCurrentMatch(false);
 }
 
@@ -1908,6 +1927,24 @@ public void WhaleTracker_JoinMessageQueryCallback(Database db, DBResultSet resul
 
     // Always prefer live filters DB color if available.
     GetClientFiltersNameColorTag(client, colorTag, sizeof(colorTag));
+
+    // Keep join announcement and cached values in sync with live formula/rank.
+    int livePoints = GetWhalePointsForClient(client);
+    int liveRank = GetWhalePointsRankForClient(client);
+    if (livePoints < 0)
+    {
+        livePoints = 0;
+    }
+    if (liveRank < 0)
+    {
+        liveRank = 0;
+    }
+    if (livePoints != points || liveRank != rank)
+    {
+        points = livePoints;
+        rank = liveRank;
+        CacheWhalePointsForClient(client, points, rank, colorTag);
+    }
 
     if (rank > 0)
     {
@@ -2577,40 +2614,40 @@ static void QueueStatsSave(int client, int userId)
         ... "%d, %d, %d, %d, %d, %d, "
         ... "%s) "
         ... "ON DUPLICATE KEY UPDATE "
-        ... "first_seen = VALUES(first_seen), "
-        ... "kills = VALUES(kills), "
-        ... "deaths = VALUES(deaths), "
-        ... "healing = VALUES(healing), "
-        ... "total_ubers = VALUES(total_ubers), "
-        ... "best_ubers_life = VALUES(best_ubers_life), "
-        ... "medic_drops = VALUES(medic_drops), "
-        ... "uber_drops = VALUES(uber_drops), "
-        ... "airshots = VALUES(airshots), "
-        ... "headshots = VALUES(headshots), "
-        ... "backstabs = VALUES(backstabs), "
-        ... "best_killstreak = VALUES(best_killstreak), "
-        ... "assists = VALUES(assists), "
-        ... "playtime = VALUES(playtime), "
-        ... "damage_dealt = VALUES(damage_dealt), "
-        ... "damage_taken = VALUES(damage_taken), "
-        ... "last_seen = VALUES(last_seen), "
+        ... "first_seen = LEAST(first_seen, VALUES(first_seen)), "
+        ... "kills = GREATEST(kills, VALUES(kills)), "
+        ... "deaths = GREATEST(deaths, VALUES(deaths)), "
+        ... "healing = GREATEST(healing, VALUES(healing)), "
+        ... "total_ubers = GREATEST(total_ubers, VALUES(total_ubers)), "
+        ... "best_ubers_life = GREATEST(best_ubers_life, VALUES(best_ubers_life)), "
+        ... "medic_drops = GREATEST(medic_drops, VALUES(medic_drops)), "
+        ... "uber_drops = GREATEST(uber_drops, VALUES(uber_drops)), "
+        ... "airshots = GREATEST(airshots, VALUES(airshots)), "
+        ... "headshots = GREATEST(headshots, VALUES(headshots)), "
+        ... "backstabs = GREATEST(backstabs, VALUES(backstabs)), "
+        ... "best_killstreak = GREATEST(best_killstreak, VALUES(best_killstreak)), "
+        ... "assists = GREATEST(assists, VALUES(assists)), "
+        ... "playtime = GREATEST(playtime, VALUES(playtime)), "
+        ... "damage_dealt = GREATEST(damage_dealt, VALUES(damage_dealt)), "
+        ... "damage_taken = GREATEST(damage_taken, VALUES(damage_taken)), "
+        ... "last_seen = GREATEST(last_seen, VALUES(last_seen)), "
 
-        ... "shots_shotguns = VALUES(shots_shotguns), "
-        ... "hits_shotguns = VALUES(hits_shotguns), "
-        ... "shots_scatterguns = VALUES(shots_scatterguns), "
-        ... "hits_scatterguns = VALUES(hits_scatterguns), "
-        ... "shots_pistols = VALUES(shots_pistols), "
-        ... "hits_pistols = VALUES(hits_pistols), "
-        ... "shots_rocketlaunchers = VALUES(shots_rocketlaunchers), "
-        ... "hits_rocketlaunchers = VALUES(hits_rocketlaunchers), "
-        ... "shots_grenadelaunchers = VALUES(shots_grenadelaunchers), "
-        ... "hits_grenadelaunchers = VALUES(hits_grenadelaunchers), "
-        ... "shots_stickylaunchers = VALUES(shots_stickylaunchers), "
-        ... "hits_stickylaunchers = VALUES(hits_stickylaunchers), "
-        ... "shots_snipers = VALUES(shots_snipers), "
-        ... "hits_snipers = VALUES(hits_snipers), "
-        ... "shots_revolvers = VALUES(shots_revolvers), "
-        ... "hits_revolvers = VALUES(hits_revolvers)",
+        ... "shots_shotguns = GREATEST(shots_shotguns, VALUES(shots_shotguns)), "
+        ... "hits_shotguns = GREATEST(hits_shotguns, VALUES(hits_shotguns)), "
+        ... "shots_scatterguns = GREATEST(shots_scatterguns, VALUES(shots_scatterguns)), "
+        ... "hits_scatterguns = GREATEST(hits_scatterguns, VALUES(hits_scatterguns)), "
+        ... "shots_pistols = GREATEST(shots_pistols, VALUES(shots_pistols)), "
+        ... "hits_pistols = GREATEST(hits_pistols, VALUES(hits_pistols)), "
+        ... "shots_rocketlaunchers = GREATEST(shots_rocketlaunchers, VALUES(shots_rocketlaunchers)), "
+        ... "hits_rocketlaunchers = GREATEST(hits_rocketlaunchers, VALUES(hits_rocketlaunchers)), "
+        ... "shots_grenadelaunchers = GREATEST(shots_grenadelaunchers, VALUES(shots_grenadelaunchers)), "
+        ... "hits_grenadelaunchers = GREATEST(hits_grenadelaunchers, VALUES(hits_grenadelaunchers)), "
+        ... "shots_stickylaunchers = GREATEST(shots_stickylaunchers, VALUES(shots_stickylaunchers)), "
+        ... "hits_stickylaunchers = GREATEST(hits_stickylaunchers, VALUES(hits_stickylaunchers)), "
+        ... "shots_snipers = GREATEST(shots_snipers, VALUES(shots_snipers)), "
+        ... "hits_snipers = GREATEST(hits_snipers, VALUES(hits_snipers)), "
+        ... "shots_revolvers = GREATEST(shots_revolvers, VALUES(shots_revolvers)), "
+        ... "hits_revolvers = GREATEST(hits_revolvers, VALUES(hits_revolvers))",
         g_Stats[client].steamId,
         g_Stats[client].firstSeenTimestamp,
         g_Stats[client].kills,
@@ -2738,6 +2775,11 @@ public void WhaleTracker_SaveCallback(Database db, DBResultSet results, const ch
                 LogError("[WhaleTracker] Failed to save stats: %s", error);
             }
         }
+
+        if (WhaleTracker_IsConnectionLostError(error))
+        {
+            WhaleTracker_ScheduleReconnect(2.0);
+        }
     }
 
     if (slot >= 0 && slot < MAX_CONCURRENT_SAVE_QUERIES)
@@ -2778,10 +2820,11 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
         {
             int custom = event.GetInt("customkill");
             bool backstab = (custom == TF_CUSTOM_BACKSTAB);
+            bool headshot = (custom == TF_CUSTOM_HEADSHOT || custom == TF_CUSTOM_HEADSHOT_DECAPITATION);
             bool medicDrop = IsMedicDrop(victim);
 
-            ApplyKillStats(g_Stats[attacker], backstab, medicDrop);
-            ApplyKillStats(g_MapStats[attacker], backstab, medicDrop);
+            ApplyKillStats(g_Stats[attacker], backstab, headshot, medicDrop);
+            ApplyKillStats(g_MapStats[attacker], backstab, headshot, medicDrop);
             MarkClientDirty(attacker);
         }
 
@@ -3116,7 +3159,7 @@ public Action Command_ShowPoints(int client, int args)
 
     CPrintToChatAll("{gold}[Whaletracker]{default} {%s}%s{default}'s Points: %d, Rank #%d", colorTag, playerName, points, rank);
     CPrintToChat(client, "Kill/Death ratio: %.2f", lifetimeKd);
-    CPrintToChat(client, "Calculation: {lightgreen}((damage / 200) + (kills + floor(assists * 0.5)) + backstabs + headshots){default} / {axis}(deaths){default} * 10000");
+    CPrintToChat(client, "Calculation: {lightgreen}((damage / 200) + (healing / 400) + (kills + floor(assists * 0.5)) + backstabs + headshots){default} / {axis}(deaths){default} * 10000");
     CPrintToChat(client, "Use {gold}!ranks{default} to view the leaderboard!");
     CacheWhalePointsForClient(target, points, rank, colorTag);
 
@@ -3379,6 +3422,7 @@ static int GetWhalePointsForClient(int client)
     int backstabs;
     int headshots;
     int damage;
+    int healing;
 
     if (g_Stats[client].loaded)
     {
@@ -3388,6 +3432,7 @@ static int GetWhalePointsForClient(int client)
         backstabs = g_Stats[client].totalBackstabs;
         headshots = g_Stats[client].totalHeadshots;
         damage = g_Stats[client].totalDamage;
+        healing = g_Stats[client].totalHealing;
     }
     else
     {
@@ -3396,7 +3441,7 @@ static int GetWhalePointsForClient(int client)
 
         char query[256];
         Format(query, sizeof(query),
-            "SELECT kills, deaths, assists, backstabs, headshots, damage_dealt "
+            "SELECT kills, deaths, assists, backstabs, headshots, damage_dealt, healing "
             ... "FROM whaletracker WHERE steamid = '%s' LIMIT 1",
             escapedSteamId);
 
@@ -3421,6 +3466,7 @@ static int GetWhalePointsForClient(int client)
         backstabs = results.FetchInt(3);
         headshots = results.FetchInt(4);
         damage = results.FetchInt(5);
+        healing = results.FetchInt(6);
         delete results;
     }
 
@@ -3430,6 +3476,7 @@ static int GetWhalePointsForClient(int client)
     int safeHeadshots = (headshots > 0) ? headshots : 0;
     int safeDamage = (damage > 0) ? damage : 0;
     int safeDeaths = (deaths > 0) ? deaths : 0;
+    int safeHealing = (healing > 0) ? healing : 0;
 
     if ((safeKills + safeDeaths) <= WHALE_POINTS_MIN_KD_SUM)
     {
@@ -3438,6 +3485,7 @@ static int GetWhalePointsForClient(int client)
 
     float positive = 0.0;
     positive += float(safeDamage) / 200.0;
+    positive += float(safeHealing) / 400.0;
     positive += float(safeKills);
     positive += float(RoundToFloor(float(safeAssists) * 0.5));
     positive += float(safeBackstabs);
@@ -3467,7 +3515,7 @@ static int GetWhalePointsForClient(int client)
         pointsFloat = 2147483000.0;
     }
 
-    int points = RoundToFloor(pointsFloat);
+    int points = RoundToCeil(pointsFloat);
     if (points < 0)
     {
         points = 0;
@@ -3538,12 +3586,12 @@ static int GetWhalePointsRankForClient(int client)
 {
     if (!g_bDatabaseReady || g_hDatabase == null)
     {
-        return 1;
+        return 0;
     }
 
     if (client <= 0 || client > MaxClients || !IsClientConnected(client))
     {
-        return 1;
+        return 0;
     }
 
     EnsureClientSteamId(client);
@@ -3589,13 +3637,13 @@ static int GetWhalePointsRankForClient(int client)
         char error[256];
         SQL_GetError(g_hDatabase, error, sizeof(error));
         LogError("[WhaleTracker] WhalePoints rank query failed: %s", error);
-        return 1;
+        return 0;
     }
 
     if (!SQL_HasResultSet(results) || !results.FetchRow())
     {
         delete results;
-        return 1;
+        return 0;
     }
 
     int rank = results.FetchInt(0);
