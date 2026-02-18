@@ -6,12 +6,13 @@
 #include <morecolors>
 #include <tf2_stocks>
 
-#define CHECK_INTERVAL 5.0
-#define TEAM_RED 2
-#define TEAM_BLUE 3
-#define TEAM_GREEN 4
-#define TEAM_YELLOW 5
-#define GAME_TEAM_COUNT 4
+#define CHECK_INTERVAL      5.0
+#define IMMUNITY_DURATION   300.0   // seconds a player stays immune after being balanced
+#define TEAM_RED            2
+#define TEAM_BLUE           3
+#define TEAM_GREEN          4
+#define TEAM_YELLOW         5
+#define GAME_TEAM_COUNT     4
 
 static const int g_GameTeams[GAME_TEAM_COUNT] =
 {
@@ -21,59 +22,63 @@ static const int g_GameTeams[GAME_TEAM_COUNT] =
     TEAM_YELLOW
 };
 
-Handle g_hImmunityCookie;
-bool g_bClearImmunity[MAXPLAYERS + 1];
-ConVar g_hLogEnabled;
-ConVar g_hMpAutoteamBalance;
-ConVar g_hMpTeamsUnbalanceLimit;
-char g_sLogPath[PLATFORM_MAX_PATH];
+Handle  g_hBalanceTimer;
+float   g_fImmunityExpiry[MAXPLAYERS + 1];  // GetGameTime() at which immunity expires; 0.0 = not immune
+ConVar  g_hLogEnabled;
+ConVar  g_hMpAutoteamBalance;
+ConVar  g_hMpTeamsUnbalanceLimit;
+int     g_iSavedAutoteamBalance;
+int     g_iSavedUnbalanceLimit;
+char    g_sLogPath[PLATFORM_MAX_PATH];
 
 public Plugin myinfo =
 {
-    name = "autobalance_4teams",
-    author = "Hombre",
+    name        = "autobalance_4teams",
+    author      = "Hombre",
     description = "Moves players when 4 teams are imbalanced.",
-    version = "1.2",
-    url = ""
+    version     = "1.3",
+    url         = ""
 };
+
+// ---------------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------------
 
 public void OnPluginStart()
 {
     g_hLogEnabled = CreateConVar("sm_autobalance_log", "1", "Enable autobalance debug logging.", _, true, 0.0, true, 1.0);
     BuildPath(Path_SM, g_sLogPath, sizeof(g_sLogPath), "logs/autobalance.log");
-
-    g_hImmunityCookie = RegClientCookie(
-        "autobalance_immune",
-        "Autobalance immunity for current map",
-        CookieAccess_Private);
+    LogToFileEx(g_sLogPath, "[autobalance_4teams] Plugin started.");
 
     ApplyServerBalanceCvars(true);
-    CreateTimer(CHECK_INTERVAL, Timer_Autobalance, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+
+    g_hBalanceTimer = CreateTimer(CHECK_INTERVAL, Timer_Autobalance, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnPluginEnd()
 {
+    // Kill our own timer cleanly.
+    if (g_hBalanceTimer != null)
+    {
+        KillTimer(g_hBalanceTimer);
+        g_hBalanceTimer = null;
+    }
+
     ApplyServerBalanceCvars(false);
 }
 
 public void OnMapStart()
 {
-    ResetImmunityForConnectedClients();
-}
-
-public void OnClientCookiesCached(int client)
-{
-    if (!IsClientInGame(client) || IsFakeClient(client))
+    // Reset all immunity timers at the start of every map.
+    for (int i = 1; i <= MaxClients; i++)
     {
-        return;
-    }
-
-    if (g_bClearImmunity[client])
-    {
-        SetClientCookie(client, g_hImmunityCookie, "0");
-        g_bClearImmunity[client] = false;
+        g_fImmunityExpiry[i] = 0.0;
     }
 }
+
+// ---------------------------------------------------------------------------
+// Main balance timer
+// ---------------------------------------------------------------------------
 
 public Action Timer_Autobalance(Handle timer)
 {
@@ -82,44 +87,49 @@ public Action Timer_Autobalance(Handle timer)
     for (int i = 0; i < GAME_TEAM_COUNT; i++)
     {
         int team = g_GameTeams[i];
-        int count = CountTeamPlayersRaw(team);
-        teamCounts[team] = count;
+        teamCounts[team] = CountTeamPlayersRaw(team);
     }
 
+    // Build the list of active teams (always RED + BLU; add GREEN/YELLOW if populated).
     int activeTeams[GAME_TEAM_COUNT];
     int activeCount = 0;
     activeTeams[activeCount++] = TEAM_RED;
     activeTeams[activeCount++] = TEAM_BLUE;
 
-    // Minimal mode-guard:
-    // If either green/yellow has players, treat mode as 4-team and include both.
     if (teamCounts[TEAM_GREEN] > 0 || teamCounts[TEAM_YELLOW] > 0)
     {
         activeTeams[activeCount++] = TEAM_GREEN;
         activeTeams[activeCount++] = TEAM_YELLOW;
     }
 
-    int biggestTeam = 0;
-    int smallestTeam = 0;
-    int biggestCount = -1;
-    int smallestCount = 99999;
-
+    // Sort active teams by count descending (simple insertion sort; max 4 elements).
+    int sortedTeams[GAME_TEAM_COUNT];
+    int sortedCounts[GAME_TEAM_COUNT];
     for (int i = 0; i < activeCount; i++)
     {
-        int team = activeTeams[i];
-        int count = teamCounts[team];
-        if (count > biggestCount)
-        {
-            biggestCount = count;
-            biggestTeam = team;
-        }
-
-        if (count < smallestCount)
-        {
-            smallestCount = count;
-            smallestTeam = team;
-        }
+        sortedTeams[i]  = activeTeams[i];
+        sortedCounts[i] = teamCounts[activeTeams[i]];
     }
+
+    for (int i = 1; i < activeCount; i++)
+    {
+        int keyTeam  = sortedTeams[i];
+        int keyCount = sortedCounts[i];
+        int j = i - 1;
+        while (j >= 0 && sortedCounts[j] < keyCount)
+        {
+            sortedTeams[j + 1]  = sortedTeams[j];
+            sortedCounts[j + 1] = sortedCounts[j];
+            j--;
+        }
+        sortedTeams[j + 1]  = keyTeam;
+        sortedCounts[j + 1] = keyCount;
+    }
+
+    int biggestTeam   = sortedTeams[0];
+    int biggestCount  = sortedCounts[0];
+    int smallestTeam  = sortedTeams[activeCount - 1];
+    int smallestCount = sortedCounts[activeCount - 1];
 
     if (biggestTeam == 0 || smallestTeam == 0 || biggestTeam == smallestTeam)
     {
@@ -133,10 +143,12 @@ public Action Timer_Autobalance(Handle timer)
     }
 
     bool forceBalance = (diff > 2);
+
     char fromTeamName[16];
     char toTeamName[16];
-    AB_GetTeamName(biggestTeam, fromTeamName, sizeof(fromTeamName));
-    AB_GetTeamName(smallestTeam, toTeamName, sizeof(toTeamName));
+    AB_GetTeamName(biggestTeam,  fromTeamName, sizeof(fromTeamName));
+    AB_GetTeamName(smallestTeam, toTeamName,   sizeof(toTeamName));
+
     LogBalance(
         "Imbalance: RED=%d BLU=%d GREEN=%d YELLOW=%d | from=%s(%d) to=%s(%d) force=%s",
         teamCounts[TEAM_RED], teamCounts[TEAM_BLUE], teamCounts[TEAM_GREEN], teamCounts[TEAM_YELLOW],
@@ -150,11 +162,24 @@ public Action Timer_Autobalance(Handle timer)
         forceBalance ? "yes" : "no"
     );
 
-    int totalScore = 0;
+    // ------------------------------------------------------------------
+    // Candidate selection.
+    //
+    // If forceBalance is active (diff > 2), switch immediately:
+    // pick from any human on the oversized team, regardless of alive
+    // state or immunity.
+    //
+    // Otherwise keep normal two-pass selection:
+    //  Pass 1 (strict)    : dead, below-average score, non-Engi/Medic
+    //  Pass 2 (relax s/a) : any alive/score state, non-Engi/Medic
+    // ------------------------------------------------------------------
+
+    int totalScore   = 0;
     int totalPlayers = 0;
+
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsEligiblePlayer(i, biggestTeam))
+        if (!(forceBalance ? IsEligiblePlayerForce(i, biggestTeam) : IsEligiblePlayer(i, biggestTeam)))
         {
             continue;
         }
@@ -174,53 +199,42 @@ public Action Timer_Autobalance(Handle timer)
     int candidates[MAXPLAYERS];
     int candidateCount = 0;
 
-    // Pass 1: strict checks (except when force-balance mode is active).
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (!IsEligiblePlayer(i, biggestTeam))
-        {
-            continue;
-        }
-
-        TFClassType cls = TF2_GetPlayerClass(i);
-        if (cls == TFClass_Engineer || cls == TFClass_Medic)
-        {
-            continue;
-        }
-
-        if (!forceBalance)
-        {
-            if (IsPlayerAlive(i))
-            {
-                continue;
-            }
-
-            if (float(GetClientScore(i)) >= avg)
-            {
-                continue;
-            }
-        }
-
-        candidates[candidateCount++] = i;
-    }
-
-    // Pass 2: if strict mode found none, relax score/alive constraints but keep class exclusions.
-    if (candidateCount == 0 && !forceBalance)
+    if (forceBalance)
     {
         for (int i = 1; i <= MaxClients; i++)
         {
-            if (!IsEligiblePlayer(i, biggestTeam))
-            {
-                continue;
-            }
-
-            TFClassType cls = TF2_GetPlayerClass(i);
-            if (cls == TFClass_Engineer || cls == TFClass_Medic)
-            {
-                continue;
-            }
+            if (!IsEligiblePlayerForce(i, biggestTeam)) continue;
 
             candidates[candidateCount++] = i;
+        }
+    }
+    else
+    {
+        // Pass 1: strict — dead, below average, no Engi/Medic.
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (!IsEligiblePlayer(i, biggestTeam)) continue;
+
+            TFClassType cls = TF2_GetPlayerClass(i);
+            if (cls == TFClass_Engineer || cls == TFClass_Medic) continue;
+            if (IsPlayerAlive(i)) continue;
+            if (float(GetClientScore(i)) >= avg) continue;
+
+            candidates[candidateCount++] = i;
+        }
+
+        // Pass 2: relax score/alive, still exclude Engi/Medic.
+        if (candidateCount == 0)
+        {
+            for (int i = 1; i <= MaxClients; i++)
+            {
+                if (!IsEligiblePlayer(i, biggestTeam)) continue;
+
+                TFClassType cls = TF2_GetPlayerClass(i);
+                if (cls == TFClass_Engineer || cls == TFClass_Medic) continue;
+
+                candidates[candidateCount++] = i;
+            }
         }
     }
 
@@ -233,37 +247,59 @@ public Action Timer_Autobalance(Handle timer)
         return Plugin_Continue;
     }
 
-    int pick = candidates[GetRandomInt(0, candidateCount - 1)];
-    int newTeam = smallestTeam;
+    // Weight selection toward lowest-scoring candidates.
+    // Build a cumulative-weight array where each candidate's weight is
+    // (maxScore - score + 1) so the lowest scorer is most likely.
+    int maxScore = 0;
+    for (int i = 0; i < candidateCount; i++)
+    {
+        int s = GetClientScore(candidates[i]);
+        if (s > maxScore) maxScore = s;
+    }
 
-    LogBalance("Autobalancing %N (%d) from %s to %s. score=%d avg=%.2f candidates=%d",
-        pick,
-        GetClientUserId(pick),
-        fromTeamName,
-        toTeamName,
-        GetClientScore(pick),
-        avg,
-        candidateCount);
+    int weights[MAXPLAYERS];
+    int totalWeight = 0;
+    for (int i = 0; i < candidateCount; i++)
+    {
+        weights[i]   = maxScore - GetClientScore(candidates[i]) + 1;
+        totalWeight += weights[i];
+    }
 
+    int roll = GetRandomInt(0, totalWeight - 1);
+    int pick = candidates[0];
+    int running = 0;
+    for (int i = 0; i < candidateCount; i++)
+    {
+        running += weights[i];
+        if (roll < running)
+        {
+            pick = candidates[i];
+            break;
+        }
+    }
+
+    LogBalance(
+        "Autobalancing %N (%d) from %s to %s. score=%d avg=%.2f candidates=%d",
+        pick, GetClientUserId(pick),
+        fromTeamName, toTeamName,
+        GetClientScore(pick), avg, candidateCount
+    );
     PrintToServer(
         "[autobalance_4teams] move %N (%d) %s -> %s | score=%d avg=%.2f candidates=%d",
-        pick,
-        GetClientUserId(pick),
-        fromTeamName,
-        toTeamName,
-        GetClientScore(pick),
-        avg,
-        candidateCount
+        pick, GetClientUserId(pick),
+        fromTeamName, toTeamName,
+        GetClientScore(pick), avg, candidateCount
     );
 
-    ChangeClientTeam(pick, newTeam);
+    ChangeClientTeam(pick, smallestTeam);
     SetClientImmunity(pick, true);
 
     CreateTimer(0.1, Timer_Respawn, GetClientUserId(pick), TIMER_FLAG_NO_MAPCHANGE);
 
     char teamColorName[24];
-    AB_GetTeamColorName(newTeam, teamColorName, sizeof(teamColorName));
+    AB_GetTeamColorName(smallestTeam, teamColorName, sizeof(teamColorName));
     CPrintToChatEx(pick, pick, "{lightgreen}[Server]{default} You've been autobalanced to %s{default}!", teamColorName);
+
     return Plugin_Continue;
 }
 
@@ -278,73 +314,48 @@ public Action Timer_Respawn(Handle timer, any userid)
     return Plugin_Stop;
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 static bool IsEligiblePlayer(int client, int team)
 {
-    if (client <= 0 || client > MaxClients)
-    {
-        return false;
-    }
-    if (!IsClientInGame(client) || IsFakeClient(client))
-    {
-        return false;
-    }
-    if (GetClientTeam(client) != team)
-    {
-        return false;
-    }
-    if (IsClientImmune(client))
-    {
-        return false;
-    }
+    if (client <= 0 || client > MaxClients) return false;
+    if (!IsClientInGame(client) || IsFakeClient(client)) return false;
+    if (GetClientTeam(client) != team) return false;
+    if (IsClientImmune(client)) return false;
+
+    return true;
+}
+
+static bool IsEligiblePlayerForce(int client, int team)
+{
+    if (client <= 0 || client > MaxClients) return false;
+    if (!IsClientInGame(client) || IsFakeClient(client)) return false;
+    if (GetClientTeam(client) != team) return false;
 
     return true;
 }
 
 static bool IsClientImmune(int client)
 {
-    if (!AreClientCookiesCached(client))
+    float expiry = g_fImmunityExpiry[client];
+    if (expiry <= 0.0) return false;
+
+    if (GetGameTime() >= expiry)
     {
+        g_fImmunityExpiry[client] = 0.0;   // Immunity has expired; clear it.
         return false;
     }
 
-    char value[4];
-    GetClientCookie(client, g_hImmunityCookie, value, sizeof(value));
-    return (value[0] == '1');
+    return true;
 }
 
 static void SetClientImmunity(int client, bool immune)
 {
-    if (!IsClientInGame(client) || IsFakeClient(client))
-    {
-        return;
-    }
+    if (!IsClientInGame(client) || IsFakeClient(client)) return;
 
-    SetClientCookie(client, g_hImmunityCookie, immune ? "1" : "0");
-    if (!immune)
-    {
-        g_bClearImmunity[client] = false;
-    }
-}
-
-static void ResetImmunityForConnectedClients()
-{
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (!IsClientInGame(i) || IsFakeClient(i))
-        {
-            continue;
-        }
-
-        if (AreClientCookiesCached(i))
-        {
-            SetClientCookie(i, g_hImmunityCookie, "0");
-            g_bClearImmunity[i] = false;
-        }
-        else
-        {
-            g_bClearImmunity[i] = true;
-        }
-    }
+    g_fImmunityExpiry[client] = immune ? (GetGameTime() + IMMUNITY_DURATION) : 0.0;
 }
 
 static int CountTeamPlayersRaw(int team)
@@ -352,16 +363,8 @@ static int CountTeamPlayersRaw(int team)
     int count = 0;
     for (int i = 1; i <= MaxClients; i++)
     {
-        if (!IsClientInGame(i) || IsFakeClient(i))
-        {
-            continue;
-        }
-
-        if (GetClientTeam(i) != team)
-        {
-            continue;
-        }
-
+        if (!IsClientInGame(i) || IsFakeClient(i)) continue;
+        if (GetClientTeam(i) != team) continue;
         count++;
     }
 
@@ -377,11 +380,11 @@ static void AB_GetTeamName(int team, char[] buffer, int maxlen)
 {
     switch (team)
     {
-        case TEAM_RED: strcopy(buffer, maxlen, "RED");
-        case TEAM_BLUE: strcopy(buffer, maxlen, "BLU");
-        case TEAM_GREEN: strcopy(buffer, maxlen, "GREEN");
+        case TEAM_RED:    strcopy(buffer, maxlen, "RED");
+        case TEAM_BLUE:   strcopy(buffer, maxlen, "BLU");
+        case TEAM_GREEN:  strcopy(buffer, maxlen, "GREEN");
         case TEAM_YELLOW: strcopy(buffer, maxlen, "YELLOW");
-        default: strcopy(buffer, maxlen, "UNKNOWN");
+        default:          strcopy(buffer, maxlen, "UNKNOWN");
     }
 }
 
@@ -389,11 +392,11 @@ static void AB_GetTeamColorName(int team, char[] buffer, int maxlen)
 {
     switch (team)
     {
-        case TEAM_RED: strcopy(buffer, maxlen, "{red}Red");
-        case TEAM_BLUE: strcopy(buffer, maxlen, "{blue}Blue");
-        case TEAM_GREEN: strcopy(buffer, maxlen, "{green}Green");
+        case TEAM_RED:    strcopy(buffer, maxlen, "{red}Red");
+        case TEAM_BLUE:   strcopy(buffer, maxlen, "{blue}Blue");
+        case TEAM_GREEN:  strcopy(buffer, maxlen, "{green}Green");
         case TEAM_YELLOW: strcopy(buffer, maxlen, "{yellow}Yellow");
-        default: strcopy(buffer, maxlen, "{default}Unknown");
+        default:          strcopy(buffer, maxlen, "{default}Unknown");
     }
 }
 
@@ -404,7 +407,7 @@ static void LogBalance(const char[] fmt, any ...)
         return;
     }
 
-    char buffer[256];
+    char buffer[512];
     VFormat(buffer, sizeof(buffer), fmt, 2);
     LogToFileEx(g_sLogPath, "%s", buffer);
 }
@@ -412,22 +415,33 @@ static void LogBalance(const char[] fmt, any ...)
 static void ApplyServerBalanceCvars(bool pluginLoaded)
 {
     if (g_hMpAutoteamBalance == null)
-    {
         g_hMpAutoteamBalance = FindConVar("mp_autoteambalance");
-    }
 
     if (g_hMpTeamsUnbalanceLimit == null)
-    {
         g_hMpTeamsUnbalanceLimit = FindConVar("mp_teams_unbalance_limit");
-    }
 
-    if (g_hMpAutoteamBalance != null)
+    if (pluginLoaded)
     {
-        g_hMpAutoteamBalance.IntValue = pluginLoaded ? 0 : 1;
-    }
+        // Save originals before we overwrite them.
+        if (g_hMpAutoteamBalance != null)
+        {
+            g_iSavedAutoteamBalance = g_hMpAutoteamBalance.IntValue;
+            g_hMpAutoteamBalance.IntValue = 0;
+        }
 
-    if (g_hMpTeamsUnbalanceLimit != null)
+        if (g_hMpTeamsUnbalanceLimit != null)
+        {
+            g_iSavedUnbalanceLimit = g_hMpTeamsUnbalanceLimit.IntValue;
+            g_hMpTeamsUnbalanceLimit.IntValue = 1;
+        }
+    }
+    else
     {
-        g_hMpTeamsUnbalanceLimit.IntValue = 1;
+        // Restore originals on unload.
+        if (g_hMpAutoteamBalance != null)
+            g_hMpAutoteamBalance.IntValue = g_iSavedAutoteamBalance;
+
+        if (g_hMpTeamsUnbalanceLimit != null)
+            g_hMpTeamsUnbalanceLimit.IntValue = g_iSavedUnbalanceLimit;
     }
 }
