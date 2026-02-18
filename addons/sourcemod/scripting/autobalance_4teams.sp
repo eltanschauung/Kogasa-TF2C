@@ -22,7 +22,6 @@ static const int g_GameTeams[GAME_TEAM_COUNT] =
     TEAM_YELLOW
 };
 
-Handle  g_hBalanceTimer;
 float   g_fImmunityExpiry[MAXPLAYERS + 1];  // GetGameTime() at which immunity expires; 0.0 = not immune
 ConVar  g_hLogEnabled;
 ConVar  g_hMpAutoteamBalance;
@@ -37,7 +36,7 @@ public Plugin myinfo =
     author      = "Hombre",
     description = "Moves players when 4 teams are imbalanced.",
     version     = "1.3",
-    url         = ""
+    url         = "https://kogasa.tf"
 };
 
 // ---------------------------------------------------------------------------
@@ -52,18 +51,11 @@ public void OnPluginStart()
 
     ApplyServerBalanceCvars(true);
 
-    g_hBalanceTimer = CreateTimer(CHECK_INTERVAL, Timer_Autobalance, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+    CreateTimer(CHECK_INTERVAL, Timer_Autobalance, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void OnPluginEnd()
 {
-    // Kill our own timer cleanly.
-    if (g_hBalanceTimer != null)
-    {
-        KillTimer(g_hBalanceTimer);
-        g_hBalanceTimer = null;
-    }
-
     ApplyServerBalanceCvars(false);
 }
 
