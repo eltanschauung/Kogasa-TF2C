@@ -142,6 +142,10 @@ public Action Timer_Autobalance(Handle timer)
     char toTeamName[16];
     AB_GetTeamName(biggestTeam,  fromTeamName, sizeof(fromTeamName));
     AB_GetTeamName(smallestTeam, toTeamName,   sizeof(toTeamName));
+    char fromTeamChat[24];
+    char toTeamChat[24];
+    AB_GetTeamChatLabel(biggestTeam,  fromTeamChat, sizeof(fromTeamChat));
+    AB_GetTeamChatLabel(smallestTeam, toTeamChat,   sizeof(toTeamChat));
 
     LogBalance(
         "Imbalance: RED=%d BLU=%d GREEN=%d YELLOW=%d | from=%s(%d) to=%s(%d) force=%s",
@@ -184,7 +188,17 @@ public Action Timer_Autobalance(Handle timer)
 
     if (totalPlayers == 0)
     {
-        LogBalance("No eligible players on %s team.", fromTeamName);
+        int immuneCount = 0;
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (!IsClientInGame(i) || IsFakeClient(i) || GetClientTeam(i) != biggestTeam) continue;
+            if (IsClientImmune(i)) immuneCount++;
+        }
+
+        LogBalance(
+            "Skip balance on %s: no eligible players (force=%d, teamPlayers=%d, immune=%d)",
+            fromTeamName, forceBalance ? 1 : 0, biggestCount, immuneCount
+        );
         return Plugin_Continue;
     }
 
@@ -234,10 +248,44 @@ public Action Timer_Autobalance(Handle timer)
 
     if (candidateCount == 0)
     {
-        LogBalance(
-            "No candidates on %s team. avg=%.2f total=%d force=%d",
-            fromTeamName, avg, totalPlayers, forceBalance ? 1 : 0
-        );
+        if (forceBalance)
+        {
+            LogBalance(
+                "Skip balance on %s: force mode had zero candidates (teamPlayers=%d, eligible=%d)",
+                fromTeamName, biggestCount, totalPlayers
+            );
+        }
+        else
+        {
+            int classExcluded = 0;
+            int aliveFiltered = 0;
+            int scoreFiltered = 0;
+            int strictWouldPass = 0;
+
+            for (int i = 1; i <= MaxClients; i++)
+            {
+                if (!IsEligiblePlayer(i, biggestTeam)) continue;
+
+                TFClassType cls = TF2_GetPlayerClass(i);
+                if (cls == TFClass_Engineer || cls == TFClass_Medic)
+                {
+                    classExcluded++;
+                    continue;
+                }
+
+                bool alive = IsPlayerAlive(i);
+                bool highScore = float(GetClientScore(i)) >= avg;
+
+                if (alive) aliveFiltered++;
+                if (highScore) scoreFiltered++;
+                if (!alive && !highScore) strictWouldPass++;
+            }
+
+            LogBalance(
+                "Skip balance on %s: no candidates (avg=%.2f eligible=%d classExcluded=%d aliveFiltered=%d scoreFiltered=%d strictPass=%d)",
+                fromTeamName, avg, totalPlayers, classExcluded, aliveFiltered, scoreFiltered, strictWouldPass
+            );
+        }
         return Plugin_Continue;
     }
 
@@ -287,6 +335,12 @@ public Action Timer_Autobalance(Handle timer)
 
     ChangeClientTeam(pick, smallestTeam);
     SetClientImmunity(pick, true);
+
+    CPrintToChatAllEx(
+        pick,
+        "{tomato}[{purple}Gap{tomato}]{default} Sending {teamcolor}%N{default} from %s to %s",
+        pick, fromTeamChat, toTeamChat
+    );
 
     CreateTimer(0.1, Timer_Respawn, GetClientUserId(pick), TIMER_FLAG_NO_MAPCHANGE);
 
@@ -379,6 +433,18 @@ static void AB_GetTeamName(int team, char[] buffer, int maxlen)
         case TEAM_GREEN:  strcopy(buffer, maxlen, "GREEN");
         case TEAM_YELLOW: strcopy(buffer, maxlen, "YELLOW");
         default:          strcopy(buffer, maxlen, "UNKNOWN");
+    }
+}
+
+static void AB_GetTeamChatLabel(int team, char[] buffer, int maxlen)
+{
+    switch (team)
+    {
+        case TEAM_RED:    strcopy(buffer, maxlen, "{red}RED{default}");
+        case TEAM_BLUE:   strcopy(buffer, maxlen, "{blue}BLU{default}");
+        case TEAM_GREEN:  strcopy(buffer, maxlen, "{green}GREEN{default}");
+        case TEAM_YELLOW: strcopy(buffer, maxlen, "{yellow}YELLOW{default}");
+        default:          strcopy(buffer, maxlen, "{default}UNKNOWN");
     }
 }
 
