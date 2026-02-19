@@ -4,8 +4,6 @@ cp_altitude
 cp_badlands
 cp_bantlands_b3
 cp_5dustbowl
-cp_caldera_rc3
-cp_coldlands_rc3
 cp_croissant_final
 cp_dustdouble_v1
 cp_forest_of_magic_2_a3
@@ -83,7 +81,6 @@ kotf_trailblazer_a4a
 kotf_trailblazer_a5b
 // King of the Hill
 koth_ashville_final
-koth_badlands
 koth_brawl_rc1
 koth_brazil
 koth_candidfriend
@@ -117,40 +114,29 @@ koth_brine_rc3a
 koth_clearcut_b15
 koth_coldwash_rc5a
 koth_creek_b1
-koth_eientei_rc1
-koth_factory
-koth_gachimuchi
-koth_harvest_winter_v3
 koth_kemptown_rc4
 koth_namicott_j
-koth_oofbay_v1
 koth_rocktop_rc2
 koth_silo_park_rc3
 koth_slaughterhouse_72_rc1
-koth_snobed_a1
 koth_soot_final1
 koth_spillway_rc3a
-koth_stupidcar_b1
 koth_watchtower
-koth_viaduct
-koth_rotunda
 koth_minnesota_a2
 koth_bagel_rc11
+koth_stupidcar_b1
 koth_stupidercar_a1
 koth_stupidestcar_a4
 koth_suijin
 koth_sunnymilk
 koth_touhvest_b6
 koth_watermill_final
-koth_youkai_mountain_rc5
 
 // MULTIARENA
 multiarena_tundra_a2a
 
 // Player Destruction
 pd_humanvillage_a4
-// PIPEBALL
-pipeball_canyon_b1
 
 // Payload
 pl_badwater
@@ -159,29 +145,18 @@ pl_barnblitz
 pl_borneo
 pl_boundary_final1
 pl_cactuscanyon
-pl_badwater_snowy2
-pl_boxcanyon_rc11
 pl_cozy_canyon_v2a
 pl_dogwater_a4
-pl_effigy_rc2
 pl_eruption_b15
 pl_escarpment_rc1
 pl_extinction_rc3
 pl_halfacre
 pl_highwood_b19
 pl_mountainside_rc2
-pl_nutcracker
-pl_quagmire
 pl_repository_rc3
-pl_rust
 pl_silverline_rc12
 pl_vigil_rc10
-pl_waste_v2
-pl_wutville
-pl_rumford_event
-//pl_cashworks_classic
-pl_coal_event
-pl_enclosure_final
+pl_cashworks_classic
 pl_farmstead_rc4
 pl_frontier_final
 pl_goldrush
@@ -189,9 +164,7 @@ pl_hoodoo_final
 pl_odyssey
 pl_phoenix
 pl_pier
-//pl_quagmire
 pl_silverline_rc11c
-pl_snowycoast
 pl_swiftwater_final1
 pl_thundermountain
 pl_upward
@@ -217,7 +190,6 @@ cp_foundry
 cp_freight_final1
 cp_furnace_rc
 cp_gullywash
-cp_powerhouse
 cp_steel
 cp_tidal_v4
 cp_well

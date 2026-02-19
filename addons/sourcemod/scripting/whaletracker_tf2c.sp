@@ -1583,6 +1583,7 @@ public void OnPluginStart()
     HookEvent("player_spawn", Event_PlayerSpawn, EventHookMode_Post);
     HookEvent("player_healed", Event_PlayerHealed, EventHookMode_Post);
     HookEvent("player_chargedeployed", Event_UberDeployed, EventHookMode_Post);
+    HookEvent("player_connect_client", Event_PlayerConnectClient, EventHookMode_Pre);
 
     RegConsoleCmd("sm_whalestats", Command_ShowStats, "Show your Whale Tracker statistics.");
     RegConsoleCmd("sm_stats", Command_ShowStats, "Show your Whale Tracker statistics.");
@@ -1829,6 +1830,13 @@ public void OnClientPostAdminCheck(int client)
     }
 
     QueryPointsCacheJoinMessage(client);
+}
+
+public Action Event_PlayerConnectClient(Event event, const char[] name, bool dontBroadcast)
+{
+    // Suppress the engine's default connect line; WhaleTracker prints its own join message.
+    event.BroadcastDisabled = true;
+    return Plugin_Continue;
 }
 
 static void AnnounceDefaultJoin(int client)

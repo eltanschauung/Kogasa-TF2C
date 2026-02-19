@@ -5,7 +5,9 @@
 #pragma newdecls required
 
 #define WELCOME_DELAY 30.0
+#define NEWS_AFTER_WELCOME_DELAY 15.0
 Handle g_hWelcomeTimer[MAXPLAYERS + 1];
+Handle g_hNewsTimer[MAXPLAYERS + 1];
 
 public Plugin myinfo =
 {
@@ -52,6 +54,12 @@ public void OnClientDisconnect(int client)
 		delete g_hWelcomeTimer[client];
 		g_hWelcomeTimer[client] = null;
 	}
+
+	if (g_hNewsTimer[client] != null)
+	{
+		delete g_hNewsTimer[client];
+		g_hNewsTimer[client] = null;
+	}
 }
 
 public Action Timer_Welcome(Handle timer, any userid)
@@ -75,7 +83,7 @@ public Action Command_News(int client, int args)
 		return Plugin_Handled;
 	}
 
-	CPrintToChat(client, "{gold}News: {default}Nerfed Eephus, added WhaleTracker !points and !ranks, added a Desert Eagle for Scout, added !colors, added !r to track weapon changes, added !hats");
+	SendNewsMessage(client);
 
 	return Plugin_Handled;
 }
@@ -152,4 +160,30 @@ void SendWelcomeMessage(int client)
 	CPrintToChat(client, "Welcome to the {axis}Gensokyo {default}%N!\nThis is a {lightgreen}4chan type server{default} with normal TF2 weapons and other awesome features.\nJoin our Steam chat to keep up with playtimes:", client);
 	CPrintToChat(client, "{gold}steamcommunity.com/chat/invite/Es09gkBm");
 	CPrintToChat(client, "Note: use !opt to mute {yellow}Homer Simpson sounds");
+
+	if (g_hNewsTimer[client] != null)
+	{
+		delete g_hNewsTimer[client];
+		g_hNewsTimer[client] = null;
+	}
+
+	g_hNewsTimer[client] = CreateTimer(NEWS_AFTER_WELCOME_DELAY, Timer_NewsAfterWelcome, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
+}
+
+public Action Timer_NewsAfterWelcome(Handle timer, any userid)
+{
+	int client = GetClientOfUserId(userid);
+	if (client == 0 || !IsClientInGame(client) || IsFakeClient(client))
+	{
+		return Plugin_Stop;
+	}
+
+	g_hNewsTimer[client] = null;
+	SendNewsMessage(client);
+	return Plugin_Stop;
+}
+
+void SendNewsMessage(int client)
+{
+	CPrintToChat(client, "{gold}News: {default}{gold}Re-added many plugins from TF2 like !tp,{default}Added autoscramble and !forcescramble for admins, added healing and damage to !points, nerfed Eephus Civilian, added a frag grenade for Soldier, added back dynamite");
 }

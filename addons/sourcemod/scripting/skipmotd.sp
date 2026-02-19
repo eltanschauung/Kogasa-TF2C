@@ -14,6 +14,8 @@ public Plugin:myinfo = {
   url = "http://mstr.ca/"
 };
 
+// Note that this plugin removes force-class join functionality due to it being broken and creating visual confusion
+
 bool clientMOTDBlocked[MAXPLAYERS + 1];
 
 public OnPluginStart()

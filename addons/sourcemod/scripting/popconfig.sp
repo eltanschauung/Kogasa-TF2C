@@ -1,80 +1,83 @@
 #include <sourcemod>
-
 #pragma semicolon 1
 #pragma newdecls required
 
 #define CHECK_INTERVAL 5.0
 
 ConVar g_hPopThreshold;
-bool g_bForceLow;
-int g_iState = -1; // -1 unknown, 0 low, 1 high
-Handle g_hCheckTimer = null;
+bool   g_bForceLow;
+int    g_iState = -1; // -1 = unknown, 0 = low, 1 = high
 
 public Plugin myinfo =
 {
-	name = "popconfig",
-	author = "Hombre",
-	description = "Execs d_lowpop.cfg or d_highpop.cfg based on playercount.",
-	version = "1.0",
-	url = ""
+    name        = "popconfig",
+    author      = "Hombre",
+    description = "Execs d_lowpop.cfg or d_highpop.cfg based on player count.",
+    version     = "1.0",
+    url         = ""
 };
 
 public void OnPluginStart()
 {
-	g_hPopThreshold = CreateConVar("pop_threshold", "14", "Player count threshold for lowpop/highpop config switching.", _, true, 0.0);
-	RegAdminCmd("sm_respawn", Command_RespawnToggle, ADMFLAG_GENERIC, "Toggle forcing lowpop config regardless of player count.");
-	UpdatePopConfig();
-	EnsureCheckTimer();
+    g_hPopThreshold = CreateConVar("pop_threshold", "14", "Player count threshold for lowpop/highpop config switching.", _, true, 0.0);
+    RegAdminCmd("sm_respawn", Command_RespawnToggle, ADMFLAG_GENERIC, "Toggle forcing lowpop config regardless of player count.");
+
+    // This timer runs forever; no TIMER_FLAG_NO_MAPCHANGE so it survives map changes.
+    CreateTimer(CHECK_INTERVAL, Timer_CheckPop, _, TIMER_REPEAT);
+
+    UpdatePopConfig();
 }
 
 public void OnMapStart()
 {
-	EnsureCheckTimer();
-	UpdatePopConfig();
+    // Force a re-exec on every map start since configs reset between maps.
+    g_iState = -1;
+    UpdatePopConfig();
 }
 
 public Action Timer_CheckPop(Handle timer)
 {
-	UpdatePopConfig();
-	return Plugin_Continue;
+    UpdatePopConfig();
+    return Plugin_Continue;
 }
 
 public Action Command_RespawnToggle(int client, int args)
 {
-	g_bForceLow = !g_bForceLow;
-	g_iState = -1;
-	UpdatePopConfig();
-	ReplyToCommand(client, "[SM] Low-pop override %s.", g_bForceLow ? "enabled" : "disabled");
-	return Plugin_Handled;
+    g_bForceLow = !g_bForceLow;
+    g_iState    = -1;
+    UpdatePopConfig();
+
+    char cfg[32];
+    strcopy(cfg, sizeof(cfg), g_bForceLow ? "d_lowpop.cfg" : "d_highpop.cfg");
+    ReplyToCommand(client, "[SM] Low-pop override %s. Executing %s.", g_bForceLow ? "enabled" : "disabled", cfg);
+
+    return Plugin_Handled;
 }
 
 static void UpdatePopConfig()
 {
-	int players = 0;
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (IsClientInGame(i) && GetClientTeam(i) >= 2)
-		{
-			players++;
-		}
-	}
+    int players = 0;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (IsClientInGame(i) && GetClientTeam(i) >= 2)
+        {
+            players++;
+        }
+    }
 
-	int threshold = g_hPopThreshold.IntValue;
-	int state = (g_bForceLow || players <= threshold) ? 0 : 1;
-	if (state == g_iState)
-	{
-		return;
-	}
+    int threshold = g_hPopThreshold.IntValue;
+    int state     = (g_bForceLow || players < threshold) ? 0 : 1;
 
-	g_iState = state;
-	ServerCommand(state == 0 ? "exec d_lowpop.cfg" : "exec d_highpop.cfg");
-	ServerExecute();
-}
+    if (state == g_iState)
+    {
+        return;
+    }
 
-static void EnsureCheckTimer()
-{
-	if (g_hCheckTimer == null)
-	{
-		g_hCheckTimer = CreateTimer(CHECK_INTERVAL, Timer_CheckPop, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-	}
+    g_iState = state;
+
+    char cfg[32];
+    strcopy(cfg, sizeof(cfg), state == 0 ? "d_lowpop.cfg" : "d_highpop.cfg");
+
+    ServerCommand("exec %s", cfg);
+    ServerExecute();
 }

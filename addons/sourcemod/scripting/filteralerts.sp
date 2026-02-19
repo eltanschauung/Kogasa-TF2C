@@ -11,6 +11,7 @@ ConVar g_cvarTeam;
 ConVar g_cvarCvar;
 Database g_hDb = null;
 bool g_bDbReady = false;
+bool g_bSuppressNextTeamAlert[MAXPLAYERS + 1];
 
 void FilterAlerts_SQLConnect()
 {
@@ -152,6 +153,7 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
 	CreateConVar("sm_tidychat_version", PLUGIN_VERSION, "Tidy Chat Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
+	CreateNative("FilterAlerts_MarkAutobalance", Native_FilterAlerts_MarkAutobalance);
 
 	g_cvarEnabled = CreateConVar("sm_tidychat_on", "1", "0/1 On/off");
 	g_cvarVoice = CreateConVar("sm_tidychat_voice", "1", "0/1 Tidy (Voice) messages");
@@ -173,6 +175,16 @@ public void OnPluginStart()
 	{
 		HookUserMessage(voiceMsg, UserMsg_VoiceSubtitle, true);
 	}
+}
+
+public any Native_FilterAlerts_MarkAutobalance(Handle plugin, int numParams)
+{
+	int client = GetNativeCell(1);
+	if (client > 0 && client <= MaxClients)
+	{
+		g_bSuppressNextTeamAlert[client] = true;
+	}
+	return 1;
 }
 
 public Action UserMessageHook(UserMsg msg_hd, BfRead bf, const int[] players, int playersNum, bool reliable, bool init)
@@ -205,6 +217,12 @@ public Action UserMessageHook(UserMsg msg_hd, BfRead bf, const int[] players, in
 
 public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
+	int client = GetClientOfUserId(GetEventInt(event, "userid"));
+	if (client > 0 && client <= MaxClients)
+	{
+		g_bSuppressNextTeamAlert[client] = false;
+	}
+
 	if(g_cvarEnabled.BoolValue && g_cvarDisconnect.BoolValue)
 	{
 		event.BroadcastDisabled = true;
@@ -226,14 +244,20 @@ public Action Event_PlayerChangeName(Event event, const char[] name, bool dontBr
 public Action Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 {
 	if(g_cvarEnabled.BoolValue && g_cvarTeam.BoolValue)
-	{
-		if(!event.GetBool("silent"))
 		{
-            int client = GetClientOfUserId(GetEventInt(event, "userid"));
-            if ((!client) || IsFakeClient(client)) return Plugin_Handled;
-            int team = GetEventInt(event, "team");
-            if (team < 1 || team > 5)
-            {
+			if(!event.GetBool("silent"))
+			{
+	            int client = GetClientOfUserId(GetEventInt(event, "userid"));
+	            if ((!client) || IsFakeClient(client)) return Plugin_Handled;
+	            if (g_bSuppressNextTeamAlert[client])
+	            {
+	            	g_bSuppressNextTeamAlert[client] = false;
+	            	event.BroadcastDisabled = true;
+	            	return Plugin_Handled;
+	            }
+	            int team = GetEventInt(event, "team");
+	            if (team < 1 || team > 5)
+	            {
                 return Plugin_Stop;
             }
 

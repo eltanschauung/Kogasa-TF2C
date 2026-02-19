@@ -1379,6 +1379,64 @@
 			"mouse_pressed_sound"	"ui/item_heavy_gun_pickup.wav"
 			"drop_sound"			"ui/item_heavy_gun_drop.wav"
 		}
+		"2006" // Dynamite Pack
+		{
+			"name"				"Dynamite Pack"
+			"item_name"			"#TF_Weapon_DynamitePack"
+			"item_type_name"	"#TF_Weapon_Grenade"
+			"item_description"	"#TF_Weapon_DynamitePack_Desc"
+			"item_quality"		"normal"
+
+			"item_class"	"tf_weapon_grenade_mirv"
+			"item_slot"		"secondary"
+			"used_by_classes"
+			{
+				"Demoman"	"1"
+			}
+			"attributes"
+			{
+				"mirv explain"					"1"
+				"maxammo primary increased"
+				{
+					"attribute_class"	"mult_maxammo_primary"
+					"value"				"1.5"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"disabled by wrench explain"	"1"
+
+				"special taunt"
+				{
+					"attribute_class"	"special_taunt"
+					"value"				"1"
+				}
+				"mirv impact"
+				{
+					"attribute_class"  "mirv_impact"
+					"value"            "1"
+				}								
+			}
+
+			"model_world"		"models/weapons/w_models/w_grenade_mirv_demo.mdl"
+			"model_player"		"models/weapons/v_models/v_mirv_demo.mdl"
+			"anim_slot"			"item2"
+			"attach_to_hands"	"2"
+			"extra_wearable"	"models/player/items/charge_pack.mdl"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"		"10 0 -10"
+				"class select override vcd"	"class_select_gunboats_dynamite"
+			}
+			"item_logname"	"mirv"
+			"item_iconname"	"mirv_projectile"
+
+			"image_inventory"		"backpack/weapons/w_models/w_grenade_mirv_demo"
+			"mouse_pressed_sound"	"ui/item_bag_fast_pickup.wav"
+			"drop_sound"			"ui/item_bag_drop.wav"
+		}
 		// ----------------------------------------------------------------
 		// Death & Taxes weapons
 		// ----------------------------------------------------------------
@@ -1397,6 +1455,21 @@
 			{
 				"Civilian"	"1"
 			}
+			"attributes"
+			{
+				"derbycane explain"		"1"
+
+				"umbrella recharge rate increased"
+				{
+					"attribute_class"	"umbrella_recharge_rate"
+					"value"				"0.85"
+				}
+				"civ boost cond override"
+				{
+					"attribute_class"	"add_civ_boost_override"
+					"value"				"TF2C_COND_CIV_SPEED 1"
+				}
+			}
 
 			"model_player"		"models/weapons/v_models/v_umbrella_civilian.mdl"
 			"model_world"		"models/weapons/w_models/w_umbrella.mdl"
@@ -1413,6 +1486,55 @@
 			"image_inventory"		"backpack/weapons/w_models/w_umbrella"
 			"mouse_pressed_sound"	"ui/item_umbrella_pickup.wav"
 			"drop_sound"			"ui/item_hat_drop.wav"
+		}
+		"2020" // Derby Cane
+		{
+			"name"				"Derby Cane"
+			"item_name"			"#TF_Weapon_DerbyCane"
+			"item_type_name"	"#TF_Weapon_Cane"
+			"item_description"	"#TF_Weapon_DerbyCane_Desc"
+			"item_quality"		"normal"
+
+			"item_class"	"tf2c_weapon_umbrella"
+			"item_slot"		"melee"
+			"used_by_classes"
+			{
+				"Civilian"	"1"
+			}
+			"attributes"
+			{
+				"derbycane explain"		"1"
+
+				"umbrella recharge rate increased"
+				{
+					"attribute_class"	"umbrella_recharge_rate"
+					"value"				"0.85"
+				}
+				"civ boost cond override"
+				{
+					"attribute_class"	"add_civ_boost_override"
+					"value"				"TF2C_COND_CIV_SPEED 1"
+				}
+			}
+
+			"model_world"				"models/weapons/w_models/w_speedcane.mdl" 
+			"model_player"				"models/weapons/v_models/v_speedcane_civilian.mdl" 
+			"attach_to_hands"			"2"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"	"8 0 -6"
+			}
+			"visuals"
+			{
+				"sound_melee_hit"		"Weapon_SpeedCane.HitFlesh"
+				"sound_melee_hit_world"	"Weapon_SpeedCane.HitWorld"
+			}
+			"item_logname"	"speedcane"
+			"item_iconname"	"speedcane"
+
+			"image_inventory"		"backpack/weapons/w_models/w_speedcane" 
+			"mouse_pressed_sound"	"ui/item_wood_pole_pickup.wav"
+			"drop_sound"			"ui/item_wood_pole_drop.wav"
 		}
 		"2001" // Nail Gun
 		{
@@ -3377,6 +3499,101 @@
 			"prefab" "weapon_guillotine"
 			"inspect_panel_dist" "40"
 		}
+		"8050"
+		{
+			"name" "SOLDIER_GRENADE"
+			"first_sale_date" "2011/08/11"
+			"item_class" "tf_weapon_grenade_mirv"
+			"craft_material_type" "weapon"
+			"craft_class" "weapon"
+			"capabilities"
+			{
+				"nameable" "1"
+				"can_craft_count" "1"
+			}
+			"tags"
+			{
+				"can_deal_gib_damage"					"1"
+				"can_deal_damage"						"1"
+				"can_deal_critical_damage"				"1"
+				"can_deal_long_distance_damage"			"1"
+			}
+			"item_type_name" "#TF_Weapon_Throwable"
+			"item_logname" "SoldierFragGrenade"
+			"item_iconname" "SoldierFragGrenade"
+			"item_name" "Frag Grenade"
+			"item_description" "GOOD MORNING VIETNAM! HOO-AH!"
+			"item_slot" "secondary"
+			"anim_slot" "melee"
+			"show_in_armory" "1"
+			"item_quality" "haunted"
+			"propername" "0"
+			"min_ilevel" "5"
+			"max_ilevel" "5"
+			"inspect_panel_dist" "38"
+			"image_inventory" "backpack/weapons/w_models/w_grenade_frag/w_grenade_frag"
+			"image_inventory_size_w" "128"
+			"image_inventory_size_h" "82"
+			"model_player" "models/weapons/v_models/v_grenade_frag_new.mdl"
+			"model_world" "models/weapons/w_models/w_grenade_frag.mdl"
+			"extra_wearable" "models\workshop\player\items\soldier\fall17_attack_packs\fall17_attack_packs.mdl"
+			"attach_to_hands" "2"
+			"used_by_classes"
+			{
+				"soldier" "1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -10"
+				"custom projectile model"				"models/weapons/w_models/w_grenade_frag.mdl"
+				"fire rate bonus hidden"				"1.33"
+				"effect bar recharge rate increased"	"0.5"
+				"no damage falloff over distance"		"1"
+				"maxammo grenades1 increased"			"2"
+				"centerfire projectile"					"1"
+				"meter_label"                           "GRENADE"
+			}
+			"attributes"		        // Oh baby a fucking drum fed smg, but it's a weird one...
+			{	
+			    "override projectile type"
+				{
+					"attribute_class"	"override_projectile_type"
+					"value"				"3"
+				}
+			    "dmg bonus vs buildings"
+				{
+					"attribute_class"	"mult_dmg_vs_buildings"
+					"value"				"2.0"
+				}
+				"damage penalty"
+				{
+					"attribute_class" "mult_dmg"
+					"value" "0.5"
+				}
+				"stickybomb charge rate mine layer"
+				{
+					"attribute_class"	"stickybomb_charge_rate"
+					"value" 			"1.65"
+				}
+				"bomblets count mod mult hidden"
+				{
+					"attribute_class"	"bomblets_count_mod"
+					"value" 			"0"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot"		"Weapon_Grenade_Mirv.Throw"
+				"sound_double_shot"		"Weapon_Grenade_Mirv.ChargeUp"
+				"sound_reload"			"Weapon_StickyBombLauncher.WorldReload"
+				"sound_special1"		"Weapon_Grenade_Mirv.Explode"
+				"sound_special2"		"Player.UseDeny"
+				"sound_special3"		"Weapon_StickyBombLauncher.ModeSwitch"
+				"sound_burst"			"Weapon_Grenade_Mirv.ThrowCrit"
+			}
+			"mouse_pressed_sound"		"#ui/item_heavy_gun_pickup.wav"
+			"drop_sound"				"#ui/item_heavy_gun_drop.wav"
+        }
 		"8020"
 		{
 			"name"		"TF_LUGER_PISTOL"
@@ -4256,7 +4473,7 @@
 				"Projectile speed increased"
 				{
 					"attribute_class" "mult_projectile_speed"
-					"value" "1.10"
+					"value" "1.20"
 				}
 				"Reload time decreased"
 				{
@@ -5466,6 +5683,93 @@ Weapon by: 'Quinnz'"
 				}
 			}
 		}
+		"40"
+		{
+			"name" "The Backburner"
+			"prefab" "valve weapon_backburner"
+			"first_sale_date" "2010/09/29"
+			"item_class" "tf_weapon_flamethrower"
+			"craft_class" "weapon"
+			"craft_material_type" "weapon"
+			"capabilities"
+			{
+				"nameable" "1"
+			}
+			"tags"
+			{
+				"can_deal_damage" "1"
+				"can_reflect_projectiles" "1"
+				"can_extinguish" "1"
+				"can_deal_posthumous_damage" "1"
+				"can_deal_critical_damage" "1"
+				"is_flamethrower" "1"
+				"can_be_festivized" "1"
+			}
+			"item_logname" "backburner"
+			"item_iconname" "backburner"
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_Flamethrower"
+			"item_name" "#TF_Unique_Achievement_Flamethrower"
+			"item_slot" "primary"
+			"image_inventory" "backpack/weapons/c_models/c_backburner/c_backburner"
+			"image_inventory_size_w" "128"
+			"image_inventory_size_h" "82"
+			"model_player" "models/weapons/c_models/c_flamethrower/c_backburner.mdl"
+            "extra_wearable" "models/workshop/player/items/pyro/hwn2021_smiling_somen/hwn2021_smiling_somen.mdl"
+			"attach_to_hands" "1"
+			"item_quality" "unique"
+			"propername" "1"
+			"min_ilevel" "10"
+			"max_ilevel" "10"
+			"used_by_classes"
+			{
+				"pyro" "1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 -3 -10"
+			}
+			"attributes"
+			{
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"damage bonus HIDDEN"
+				{
+					"attribute_class" "mult_dmg"
+					"value" "0.7"
+				}
+			}
+			"visuals"
+			{
+                                "player_bodygroups"
+				{
+					"Head" "1"
+				}
+				"sound_single_shot" "Weapon_BackBurner.FireStart"
+				"sound_special1" "Weapon_BackBurner.FireLoop"
+				"sound_burst" "Weapon_BackBurner.FireLoopCrit"
+				"attached_models"
+				{
+					"0"
+					{
+						"model" "models/weapons/c_models/c_flamethrower/c_flamethrower_pilotlight.mdl"
+					}
+				}
+				"attached_models_festive"
+				{
+					"0"
+					{
+						"model" "models/weapons/c_models/c_flamethrower/c_flamethrower_festivizer.mdl"
+					}
+				}
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+			"xifier_class_remap" "weapon_backburner"
+		}
         "594"
         {
             "name" "The Phlogistinator"
@@ -6277,13 +6581,6 @@ Weapon by: 'Quinnz'"
 			}
 			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
 			"drop_sound" "ui/item_heavy_gun_drop.wav"
-		}
-		"131"
-		{
-			"name" "The Chargin\' Targe"
-			"prefab" "valve weapon_targe"
-			"first_sale_date" "2010/09/29"
-			"xifier_class_remap" "weapon_targe"
 		}
 		"265"
 		{
@@ -8191,81 +8488,6 @@ Weapon by: 'Quinnz'"
 			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
 			"drop_sound" "ui/item_heavy_gun_drop.wav"
 		}
-		"173"
-		{
-			"name" "The Vita-Saw"
-			"first_sale_date" "2010/09/29"
-			"item_class" "tf_weapon_bonesaw"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_deal_critical_damage" "1"
-				"can_be_festivized" "1"
-			}
-			"item_logname" "battleneedle"
-			"item_iconname" "battleneedle"
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_Bonesaw"
-			"item_name" "#TF_Unique_BattleSaw"
-			"item_description" "#TF_Unique_BattleSaw_Desc"
-			"item_slot" "melee"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_uberneedle/c_uberneedle"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"inspect_panel_dist" "50"
-			"model_player" "models/workshop/weapons/c_models/c_uberneedle/c_uberneedle.mdl"
-			"attach_to_hands" "1"
-			"item_quality" "vintage"
-			"propername" "1"
-			"min_ilevel" "5"
-			"max_ilevel" "5"
-			"used_by_classes"
-			{
-				"medic" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "10 0 -12"
-			}
-			"attributes"
-			{
-				"ubercharge_preserved_on_spawn_max"
-				{
-					"attribute_class" "ubercharge_preserved_on_spawn_max"
-					"value" "0.6"
-				}
-				"max health additive penalty"
-				{
-					"attribute_class" "add_maxhealth"
-					"value" "-10"
-				}
-				"lunchbox adds minicrits"
-				{
-					"attribute_class" "set_weapon_mode"
-					"value" "2"
-				}
-			}
-			"visuals"
-			{
-				"sound_taunt" "Taunt.MedicViolinUber"
-				"sound_melee_hit" "Weapon_UberSaw.HitFlesh"
-				"attached_models_festive"
-				{
-					"0"
-					{
-						"model" "models/workshop/weapons/c_models/c_uberneedle/c_uberneedle_festivizer.mdl"
-					}
-				}
-			}
-			"mouse_pressed_sound" "ui/item_metal_weapon_pickup.wav"
-			"drop_sound" "ui/item_metal_weapon_drop.wav"
-		}
 		"304"
 		{
 			"name" "The Amputator"
@@ -8358,92 +8580,6 @@ Weapon by: 'Quinnz'"
 			"mouse_pressed_sound" "ui/item_metal_weapon_pickup.wav"
 			"drop_sound" "ui/item_metal_weapon_drop.wav"
 		}
-		"230"
-		{
-			"name" "The Sydney Sleeper"
-			"first_sale_date" "2010/09/29"
-			"prefab" "weapon_sniperrifle_alt1"
-			"item_class" "tf_weapon_sniperrifle"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_deal_mvm_penetration_damage" "1"
-				"can_deal_long_distance_damage" "1"
-				"can_extinguish" "1"
-				"can_be_festivized" "1"
-			}
-			"item_logname" "sydney_sleeper"
-			"item_iconname" "sydney_sleeper"
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_SniperRifle"
-			"item_name" "#TF_SydneySleeper"
-			"item_slot" "primary"
-			"item_quality" "vintage"
-			"propername" "1"
-			"min_ilevel" "1"
-			"max_ilevel" "1"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_sydney_sleeper/c_sydney_sleeper"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"model_player" "models/workshop/weapons/c_models/c_sydney_sleeper/c_sydney_sleeper.mdl"
-			"attach_to_hands" "1"
-			"visuals"
-			{
-				"player_bodygroups"
-				{
-					"bullets" "1"
-				}
-				"sound_single_shot" "Weapon_SydneySleeper.Single"
-				"sound_burst" "Weapon_SydneySleeper.SingleCrit"
-				"attached_models_festive"
-				{
-					"0"
-					{
-						"model" "models/workshop/weapons/c_models/c_sydney_sleeper/c_sydney_sleeper_festivizer.mdl"
-					}
-				}
-			}
-			"used_by_classes"
-			{
-				"sniper" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "5 0 -8"
-			}
-			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
-			"drop_sound" "ui/item_heavy_gun_drop.wav"
-			"brass_eject_model" ""
-			"attributes"
-			{
-				"sniper no headshots"
-				{
-					"attribute_class" "set_weapon_mode"
-					"value" "1"
-				}
-				"jarate duration"
-				{
-					"attribute_class" "jarate_duration"
-					"value" "4"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class" "mult_crit_chance"
-					"value" "0"
-				}
-				"sniper charge per sec"
-				{
-					"attribute_class" "mult_sniper_charge_per_sec"
-					"value" "1.25"
-				}
-			}
-		}
 		"402"
 		{
 			"name" "The Bazaar Bargain"
@@ -8494,99 +8630,6 @@ Weapon by: 'Quinnz'"
 					"0"
 					{
 						"model" "models/workshop_partner/weapons/c_models/c_dex_sniperrifle/c_dex_sniperrifle_festivizer.mdl"
-					}
-				}
-			}
-		}
-		"752"
-		{
-			"name" "The Hitman\'s Heatmaker"
-			"first_sale_date" "2012/06/27"
-			"item_class" "tf_weapon_sniperrifle"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_deal_critical_damage" "1"
-				"can_headshot" "1"
-				"can_deal_mvm_penetration_damage" "1"
-				"can_deal_long_distance_damage" "1"
-				"can_be_festivized" "1"
-			}
-			"item_logname" "pro_rifle"
-			"item_iconname" "pro_rifle"
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_SniperRifle"
-			"item_name" "#TF_Pro_SniperRifle"
-			"item_description" "#TF_Pro_SniperRifle_Desc"
-			"item_slot" "primary"
-			"item_quality" "vintage"
-			"propername" "1"
-			"min_ilevel" "1"
-			"max_ilevel" "1"
-			"inspect_panel_dist" "58"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_pro_rifle/c_pro_rifle"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"model_player" "models/workshop/weapons/c_models/c_pro_rifle/c_pro_rifle.mdl"
-			"attach_to_hands" "1"
-			"used_by_classes"
-			{
-				"sniper" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "5 0 -8"
-			}
-			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
-			"drop_sound" "ui/item_heavy_gun_drop.wav"
-			"attributes"
-			{
-				"decapitate type"
-				{
-					"attribute_class" "decapitate_type"
-					"value" "1"
-				}
-				"damage penalty on bodyshot"
-				{
-					"attribute_class" "bodyshot_damage_modify"
-					"value" "0.80"
-				}
-				"rage on kill"
-				{
-					"attribute_class" "rage_on_kill"
-					"value" "35"
-				}
-				"rage on assists"
-				{
-					"attribute_class" "rage_on_assists"
-					"value" "15"
-				}
-				"mod soldier buff type"
-				{
-					"attribute_class" "set_buff_type"
-					"value" "6"
-				}
-				"sniper rage DISPLAY ONLY"
-				{
-					"attribute_class" "sniper_rage_DISPLAY_ONLY"
-					"value" "0"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot" "Weapon_ProSniperRifle.Single"
-				"sound_burst" "Weapon_ProSniperRifle.SingleCrit"
-				"attached_models_festive"
-				{
-					"0"
-					{
-						"model" "models/workshop/weapons/c_models/c_pro_rifle/c_pro_rifle_festivizer.mdl"
 					}
 				}
 			}
@@ -10946,17 +10989,16 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_w" "128"
 			"image_inventory_size_h" "82"
 			"model_player" "models/weapons/c_models/c_flamethrower/c_backburner.mdl"
-			"extra_wearable" "models/player/bluearchive/neru_halo.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "99"
 			"static_attrs"
 			{
 				"min_viewmodel_offset" "10 -3 -10"
-				"airblast cost increased" "2.5"
 				"mod flamethrower back crit" "1"
+				"airblast cost increased" "2.5"
 				"crit mod disabled hidden" "0"
 			}
 			"visuals"
@@ -11101,11 +11143,6 @@ Weapon by: 'Quinnz'"
 			}
 			"attributes"
 			{
-				"hidden secondary max ammo penalty"
-				{
-					"attribute_class" "mult_maxammo_secondary"
-					"value" "0.5"
-				}
 				"blast dmg to self increased"
 				{
 					"attribute_class" "blast_dmg_to_self"
@@ -11195,11 +11232,6 @@ Weapon by: 'Quinnz'"
 			}
 			"attributes"
 			{
-				"hidden secondary max ammo penalty"
-				{
-					"attribute_class" "mult_maxammo_secondary"
-					"value" "0.5"
-				}
 				"self dmg push force decreased"
 				{
 					"attribute_class" "mult_dmgself_push_force"
@@ -11829,60 +11861,6 @@ Weapon by: 'Quinnz'"
 			}
 			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
 			"drop_sound" "ui/item_heavy_gun_drop.wav"
-		}
-		"weapon_targe"
-		{
-			"enabled" "1"
-			"item_class" "tf_wearable_demoshield"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_be_equipped_by_soldier_or_demo" "1"
-			}
-			"base_item_name" "The Chargin\' Targe"
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Wearable_Shield"
-			"item_name" "#TF_Unique_Achievement_Shield"
-			"item_description" "#TF_Unique_Achievement_Shield_Desc"
-			"item_slot" "secondary"
-			"equip_region" "arms"
-			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
-			"propername" "1"
-			"min_ilevel" "1"
-			"max_ilevel" "99"
-			"item_logname" "demoshield"
-			"item_iconname" "demoshield"
-			"image_inventory" "backpack/weapons/c_models/c_targe/c_targe"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"inspect_panel_dist" "33"
-			"model_player" "models/weapons/c_models/c_targe/c_targe.mdl"
-			"act_as_wearable" "1"
-			"attach_to_hands" "0"
-			"attach_to_hands_vm_only" "1"
-			"drop_type" "drop"
-			"used_by_classes"
-			{
-				"demoman" "1"
-			}
-			"attributes"
-			{
-				"allowed in medieval mode"
-				{
-					"attribute_class" "allowed_in_medieval_mode"
-					"value" "1"
-				}
-			}
-			"mouse_pressed_sound" "ui/item_wood_pole_pickup.wav"
-			"drop_sound" "ui/item_wood_pole_drop.wav"
-			"xifier_class_remap" "weapon_targe"
 		}
 		"weapon_sword"
 		{
