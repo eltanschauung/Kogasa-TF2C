@@ -48,6 +48,8 @@ public void OnPluginStart()
     g_hLogEnabled = CreateConVar("sm_autobalance_log", "1", "Enable autobalance debug logging.", _, true, 0.0, true, 1.0);
     BuildPath(Path_SM, g_sLogPath, sizeof(g_sLogPath), "logs/autobalance.log");
     LogToFileEx(g_sLogPath, "[autobalance_4teams] Plugin started.");
+    HookEvent("teamplay_round_win", Event_RoundEnd);
+    HookEvent("teamplay_round_stalemate", Event_RoundEnd);
 
     ApplyServerBalanceCvars(true);
 
@@ -59,9 +61,9 @@ public void OnPluginEnd()
     ApplyServerBalanceCvars(false);
 }
 
-public void OnMapStart()
+public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-    // Reset all immunity timers at the start of every map.
+    // Clear autobalance immunity every round, not just when the map changes.
     for (int i = 1; i <= MaxClients; i++)
     {
         g_fImmunityExpiry[i] = 0.0;
