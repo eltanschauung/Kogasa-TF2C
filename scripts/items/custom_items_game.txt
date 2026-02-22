@@ -777,6 +777,14 @@
 			"item_class"	"tf_weapon_medigun"
 			"item_slot"		"secondary"
 			"baseitem"		"1"
+			"attributes"
+			{
+				"boost speed from patient"
+				{
+					"attribute_class"	"boost_speed_from_patient"
+					"value"				"1"
+				}
+			}
 			"used_by_classes"
 			{
 				"Medic"	"1"
@@ -882,6 +890,11 @@
 			}
 			"attributes"
 			{
+				"boost speed from patient"
+				{
+					"attribute_class"	"boost_speed_from_patient"
+					"value"				"1"
+				}
 				"medigun charge is crit boost"
 				{
 					"attribute_class"	"set_charge_type"
@@ -1565,13 +1578,97 @@
 			"mouse_pressed_sound"	"ui/item_metal_weapon_pickup.wav"
 			"drop_sound"			"ui/item_nailgun_drop.wav"
 		}
+		"2002" // R.P.G.
+		{
+			"name"				"R.P.G."
+			"item_name"			"#TF_Weapon_RPG"
+			"item_type_name"	"#TF_Weapon_RocketLauncher"
+			"item_description"	"#TF_Weapon_RPG_Desc"
+			"item_quality" "unique"
+			
+			"item_class"	"tf_weapon_rocketlauncher"
+			"item_slot"		"primary"
+			"used_by_classes"
+			{
+				"Soldier"		"1"
+			}
+			"attributes"
+			{
+				"rocket gravity"
+				{
+					"attribute_class"	"mod_rocket_gravity"
+					"value"				"0.45"
+				}
+				"damage bonus"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"				"1.20"
+				}
+				"self dmg push force increased"				
+				{
+					"attribute_class"	"mult_dmgself_push_force"
+					"value" 			"1.15"
+				}
+				"Reload time increased"
+				{
+					"attribute_class" "mult_reload_time"
+					"value" "1.20"
+				}
+				"Projectile speed decreased"
+				{
+					"attribute_class"	"mult_projectile_speed"
+					"value"				"0.75"
+				}
+				"clip size penalty"
+				{
+					"attribute_class"	"mult_clipsize"
+					"value"				"0.25"
+				}
+				"hidden separator"		"1"
+				"no damage falloff over distance"
+				{
+					"attribute_class"	"mod_no_dmg_falloff"
+					"value"				"1"
+				}
+				"custom projectile model"
+				{
+					"attribute_class"	"custom_projectile_model"
+					"value"				"models/weapons/w_models/w_rocketbeta.mdl"
+				}
+				"rocket whistle"
+				{
+					"attribute_class"	"rocket_whistle"
+					"value"				"1"
+				}
+			}
+
+			"model_world"				"models/weapons/w_models/w_rpg.mdl"
+			"model_player"				"models/weapons/v_models/v_rpg_soldier.mdl"
+			"attach_to_hands"			"2"
+			"static_attrs"
+			{
+				"min_viewmodel_offset"	"10 -3 -10"
+			}
+			"visuals"
+			{
+				"sound_single_shot"	"Weapon_BetaRPG.Single"
+				"sound_burst"		"Weapon_BetaRPG.SingleCrit"
+				"sound_special1"	"Weapon_BetaRPG.Explode"
+			}
+			"item_logname"				"rpg"
+			"item_iconname"				"rpg"
+
+			"image_inventory"		"backpack/weapons/w_models/w_rpg"
+			"mouse_pressed_sound"	"ui/item_heavier_gun_pickup.wav"
+			"drop_sound"			"ui/item_heavier_gun_drop.wav"
+		}
 		"2003" // Hunting Revolver
 		{
 			"name"				"Hunting Revolver"
 			"item_name"			"#TF_Weapon_HuntingRevolver"
 			"item_type_name"	"#TF_Weapon_SniperRifle"
 			"item_description"	"#TF_Weapon_HuntingRevolver_Desc"
-			"item_quality"		"normal"
+			"item_quality"		"unique"
 
 			"item_class"	"tf2c_weapon_hunting_revolver"
 			"item_slot"		"primary"
@@ -2099,7 +2196,7 @@
 			"item_name"			"#TF_Weapon_Lescampette"
 			"item_type_name"	"#TF_Weapon_InvisWatch"
 			"item_description"	"#TF_Weapon_Lescampette_Desc"
-			"item_quality"		"normal"
+			"item_quality"		"unique"
 
 			"item_class"		"tf_weapon_invis"
 			"item_slot"		"pda2"
@@ -2403,7 +2500,7 @@
 			"item_name"			"#TF_Weapon_AntiAircraftCannon"
 			"item_type_name"	"#TF_Weapon_AntiAircraftCannon"
 			"item_description"	"#TF_Weapon_AntiAircraftCannon_Desc"
-			"item_quality"		"normal"
+			"item_quality"		"unique"
 
 			"item_class"				"tf2c_weapon_aagun"
 			"item_slot"					"primary"
@@ -2699,6 +2796,8 @@
 				"min_viewmodel_offset"			"10 0 -12"
 				"class select override vcd"		"class_select_nader"
 				"Projectile speed secondary"	"0.75"
+				"uber duration decreased"	"0.75"
+				"Reload time decreased"	"0.80"
 			}
 			"visuals"
 			{
@@ -2805,7 +2904,7 @@
 			"item_name"			"#TF_Weapon_Cyclops"
 			"item_type_name"	"#TF_Weapon_EMPGrenadeLauncher"
 			"item_description"	"#TF_Weapon_Cyclops_Desc"
-			"item_quality"		"normal"
+			"item_quality"		"unique"
 			"propername"		"1"
 
 			"item_class"	"tf2c_weapon_cyclops"
@@ -2893,7 +2992,7 @@
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -2990,7 +3089,7 @@
 			"inspect_panel_dist" "55"
 			"model_player" "models/workshop/weapons/c_models/c_paintrain/c_paintrain.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -3260,7 +3359,7 @@
 			"item_description" "#TF_Weapon_PEP_Scattergun_Desc"
 			"item_logname" "pep_brawlerblaster"
 			"item_iconname" "pep_brawlerblaster"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"baseitem" "0"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -3333,7 +3432,7 @@
 			"show_in_armory" "1"
 			"item_logname" "back_scatter"
 			"item_iconname" "back_scatter"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"baseitem" "0"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -3442,7 +3541,7 @@
 			"item_logname" "pep_pistol"
 			"item_iconname" "pep_pistol"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"baseitem" "0"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -3758,6 +3857,386 @@
 			"mouse_pressed_sound" "ui/item_pack_pickup.wav"
 			"drop_sound" "ui/item_pack_drop.wav"
 		}
+		"8040"
+		{
+			"name" "TF_HOLDFIRE_SHOTGUN"
+			"item_class" "tf_weapon_shotgun"
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_Shotgun"
+			"item_name" "Old Panic Attack"
+			"item_logname" "Old Panic Attack"
+			"item_iconname" "Old Panic Attack"
+			"item_description" "Hold Fire to Load up to 4 rounds and release to fire them"
+			"item_slot" "secondary"
+			"item_quality" "vintage"
+			"propername" "1"
+			"inspect_panel_dist" "40"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
+			"model_player" "models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"attach_to_hands" "1"
+			"used_by_classes"
+			{
+				"engineer" "primary"
+
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -10"
+				"weapon_stattrak_module_scale" "0.608"
+			}
+			"attributes"
+			{
+				"fire rate bonus with reduced health"													
+				{
+					"attribute_class"	"mult_postfiredelay_with_reduced_health"
+					"value"				"0.66"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class" "mult_postfiredelay"
+					"value" "0.8"
+				}
+				"Reload time decreased"
+				{
+					"attribute_class" "mult_reload_time"
+					"value" "0.66"
+				}
+				"mult_spread_scales_consecutive"
+				{
+					"attribute_class" "mult_spread_scales_consecutive"
+					"value" "1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "0.67"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"hidden separator"	"1"
+				"auto fires full clip"
+				{
+					"attribute_class" "auto_fires_full_clip"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_BackShot_Shotty.Single"
+				"sound_burst" "Weapon_BackShot_Shotty.SingleCrit"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
+
+		"8041"
+		{
+			"name" "TF_HOLDFIRE_SHOTGUN_HEAVY"
+			"item_class" "tf_weapon_shotgun"
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_Shotgun"
+			"item_name" "Old Panic Attack"
+			"item_logname" "Old Panic Attack"
+			"item_iconname" "Old Panic Attack"
+			"item_description" "Hold Fire to Load up to 4 rounds and release to fire them
+
+Model by: 'Mooses Suuri'
+Weapon by: 'Lime Girl'"
+			"item_slot" "secondary"
+			"item_quality" "vintage"
+			"propername" "1"
+			"inspect_panel_dist" "40"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
+			"model_player" "models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"attach_to_hands" "1"
+			"used_by_classes"
+			{
+				"heavy" "1"
+
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -10"
+				"weapon_stattrak_module_scale" "0.608"
+			}
+			"attributes"
+			{
+				"fire rate bonus with reduced health"													
+				{
+					"attribute_class"	"mult_postfiredelay_with_reduced_health"
+					"value"				"0.66"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class" "mult_postfiredelay"
+					"value" "0.8"
+				}
+				"Reload time decreased"
+				{
+					"attribute_class" "mult_reload_time"
+					"value" "0.66"
+				}
+				"mult_spread_scales_consecutive"
+				{
+					"attribute_class" "mult_spread_scales_consecutive"
+					"value" "1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "0.67"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"hidden separator"	"1"
+				"auto fires full clip"
+				{
+					"attribute_class" "auto_fires_full_clip"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_BackShot_Shotty.Single"
+				"sound_burst" "Weapon_BackShot_Shotty.SingleCrit"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
+
+		"8042"
+		{
+			"name" "TF_HOLDFIRE_SHOTGUN_SOLDIER"
+			"item_class" "tf_weapon_shotgun"
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_Shotgun"
+			"item_name" "Old Panic Attack"
+			"item_logname" "Old Panic Attack"
+			"item_iconname" "Old Panic Attack"
+			"item_description" "Hold Fire to Load up to 4 rounds and release to fire them
+
+Model by: 'Mooses Suuri'
+Weapon by: 'Lime Girl'"
+			"item_slot" "secondary"
+			"item_quality" "vintage"
+			"propername" "1"
+			"inspect_panel_dist" "40"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
+			"model_player" "models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"attach_to_hands" "1"
+			"used_by_classes"
+			{
+				"soldier" "1"
+
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -10"
+				"weapon_stattrak_module_scale" "0.608"
+			}
+			"attributes"
+			{
+				"fire rate bonus with reduced health"													
+				{
+					"attribute_class"	"mult_postfiredelay_with_reduced_health"
+					"value"				"0.66"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class" "mult_postfiredelay"
+					"value" "0.8"
+				}
+				"Reload time decreased"
+				{
+					"attribute_class" "mult_reload_time"
+					"value" "0.66"
+				}
+				"mult_spread_scales_consecutive"
+				{
+					"attribute_class" "mult_spread_scales_consecutive"
+					"value" "1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "0.67"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"hidden separator"	"1"
+				"auto fires full clip"
+				{
+					"attribute_class" "auto_fires_full_clip"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_BackShot_Shotty.Single"
+				"sound_burst" "Weapon_BackShot_Shotty.SingleCrit"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
+
+		"8043"
+		{
+			"name" "TF_HOLDFIRE_SHOTGUN_PYRO"
+			"item_class" "tf_weapon_shotgun"
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_Shotgun"
+			"item_name" "Old Panic Attack"
+			"item_logname" "Old Panic Attack"
+			"item_iconname" "Old Panic Attack"
+			"item_description" "Hold Fire to Load up to 4 rounds and release to fire them
+
+Model by: 'Mooses Suuri'
+Weapon by: 'Lime Girl'"
+			"item_slot" "secondary"
+			"item_quality" "vintage"
+			"propername" "1"
+			"inspect_panel_dist" "40"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_trenchgun/c_trenchgun"
+			"model_player" "models/workshop/weapons/c_models/c_trenchgun/c_trenchgun.mdl"
+			"attach_to_hands" "1"
+			"used_by_classes"
+			{
+				"pyro" "1"
+
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -10"
+				"weapon_stattrak_module_scale" "0.608"
+			}
+			"attributes"
+			{
+				"fire rate bonus with reduced health"													
+				{
+					"attribute_class"	"mult_postfiredelay_with_reduced_health"
+					"value"				"0.66"
+				}
+				"fire rate bonus"
+				{
+					"attribute_class" "mult_postfiredelay"
+					"value" "0.8"
+				}
+				"Reload time decreased"
+				{
+					"attribute_class" "mult_reload_time"
+					"value" "0.66"
+				}
+				"mult_spread_scales_consecutive"
+				{
+					"attribute_class" "mult_spread_scales_consecutive"
+					"value" "1"
+				}
+				"clip size penalty"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "0.67"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"hidden separator"	"1"
+				"auto fires full clip"
+				{
+					"attribute_class" "auto_fires_full_clip"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_BackShot_Shotty.Single"
+				"sound_burst" "Weapon_BackShot_Shotty.SingleCrit"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
+		"8058"
+		{
+			"name" "TF_SHOTGUN_MEDIC"
+			"item_class" "tf_weapon_shotgun_primary"
+			"show_in_armory" "1"
+			"item_type_name" "Prototype Advanced Shotgun"
+			"item_name" "Vogeljäger"
+			"item_logname" "Vogeljäger"
+			"item_iconname" "Vogeljäger"
+			"item_description" "I'm joining the jews sorry... I'm a vampire now"
+			"item_slot" "primary"
+			"item_quality" "haunted"
+			"propername" "0"
+			"inspect_panel_dist" "40"
+			"image_inventory"			"backpack/weapons/c_models/c_medicshotgun/c_medicshotgun"
+			"model_world"				"models/weapons/w_models/w_syringe_shot.mdl"
+			"model_player"				"models/weapons/v_models/v_medic_shotgun.mdl"
+			"extra_wearable"			"models/workshop/player/items/medic/dec15_berlin_brain_bowl/dec15_berlin_brain_bowl.mdl"
+			"attach_to_hands" "2"
+			"used_by_classes"
+			{
+				"medic" "1"
+
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -11"
+			}
+			"attributes"
+			{
+				"drop team health pack on kill"
+				{
+					"attribute_class" "drop_team_health_pack_on_kill"
+					"value" "1"
+				}
+				"add uber charge on hit"
+				{
+					"attribute_class"	"add_onhit_ubercharge"
+					"value"	"0.033"
+				}
+				"heal on hit for slowfire"
+				{
+					"attribute_class" "add_onhit_addhealth"
+					"value" "10.0"
+				}
+				"health drain medic"
+				{
+					"attribute_class" "add_health_regen"
+					"value" "-3"
+				}
+				"damage penalty"
+				{
+					"attribute_class"	"mult_dmg"
+					"value"				"0.666"
+				}
+				"clip size penalty"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "0.67"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_FrontierJustice.Single"
+				"sound_burst" "Weapon_FrontierJustice.SingleCrit"
+				"sound_reload" "Weapon_Short_Stop.Reload"
+				"muzzle_flash" "muzzle_bignasty"
+				"tracer_effect" "bullet_bignasty_tracer01"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
 		"8037"
 		{
 			"name"						"TF_WEAPON_SHARP_DRESSER"
@@ -4018,7 +4497,7 @@
 			"item_logname" "candy_cane"
 			"item_iconname" "candy_cane"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "25"
 			"max_ilevel" "25"
@@ -4099,7 +4578,7 @@
 			"item_logname" "boston_basher"
 			"item_iconname" "boston_basher"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "25"
 			"max_ilevel" "25"
@@ -4175,7 +4654,7 @@
 			"inspect_panel_dist" "55"
 			"model_player" "models/workshop_partner/weapons/c_models/c_shogun_warfan/c_shogun_warfan.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -4251,7 +4730,7 @@
 			"item_iconname" "atomizer"
 			"item_name" "#TF_Atomizer"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"propername" "1"
@@ -4457,7 +4936,7 @@
 			"show_in_armory" "1"
 			"item_logname" "Eephus"
 			"item_iconname" "Eephus"
-			"item_quality" "completed"
+			"item_quality" "haunted"
 			"baseitem" "0"
 			"inspect_panel_dist" "38"
 			"image_inventory" "backpack/weapons/c_models/c_baseball_launcher_new/c_baseball_launcher_new"
@@ -4782,7 +5261,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_RocketLauncher"
 			"item_name" "#TF_Unique_Achievement_RocketLauncher"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
@@ -4840,6 +5319,84 @@ Weapon by: 'Quinnz'"
 			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
 			"drop_sound" "ui/item_heavy_gun_drop.wav"
 		}
+		"14820"
+		{
+			"name" "Direct Hit (Arc)"
+			"prefab" "valve"
+			"item_class" "tf_weapon_rocketlauncher_directhit"
+			"tags"
+			{
+				"can_deal_damage" "1"
+				"can_deal_gib_damage" "1"
+				"can_be_equipped_by_soldier_or_demo" "1"
+				"can_deal_posthumous_damage" "1"
+				"can_deal_critical_damage" "1"
+				"can_deal_long_distance_damage" "1"
+				"can_be_festivized" "1"
+			}
+			"show_in_armory" "1"
+			"item_type_name" "#TF_Weapon_RocketLauncher"
+			"item_name" "Direct Hit (arc)"
+			"item_slot" "primary"
+			"item_quality" "haunted"
+			"propername" "1"
+			"min_ilevel" "1"
+			"max_ilevel" "1"
+			"image_inventory" "backpack/weapons/c_models/c_directhit/c_directhit"
+			"image_inventory_size_w" "128"
+			"image_inventory_size_h" "82"
+			"model_player" "models/weapons/c_models/c_directhit/c_directhit.mdl"
+			"item_description" "This version of the Direct Hit fires in an arc and has no damage falloff."
+			"attach_to_hands" "1"
+			"used_by_classes"
+			{
+				"soldier" "1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 -3 -10"
+			}
+			"attributes"
+			{
+				"rocket gravity"
+				{
+					"attribute_class"	"mod_rocket_gravity"
+					"value"				"1.52"
+				}
+				"Blast radius decreased"
+				{
+					"attribute_class" "mult_explosion_radius"
+					"value" "0.3"
+				}
+				"Projectile speed increased"
+				{
+					"attribute_class" "mult_projectile_speed"
+					"value" "1.8"
+				}
+				"damage bonus"
+				{
+					"attribute_class" "mult_dmg"
+					"value" "1.25"
+				}
+				"mod mini-crit airborne"
+				{
+					"attribute_class" "mini_crit_airborne"
+					"value" "1"
+				}
+				"no damage falloff over distance"
+				{
+					"attribute_class"	"mod_no_dmg_falloff"
+					"value"				"1"
+				}
+				"disable fancy class select anim"
+				{
+					"attribute_class" "disable_fancy_class_select_anim"
+					"value" "1"
+				}
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+		}
 		"8000"
 		{
 			"name" "Wee Willy"
@@ -4866,7 +5423,7 @@ Weapon by: 'Quinnz'"
 			"item_description" "Reminds me a lot of the Soldier's Black Box."
 			"item_slot" "secondary"
 			"anim_slot" "primary"
-			"item_quality" "completed"
+			"item_quality" "haunted"
 			"propername" "1"
 			"item_logname" "weewilly"
 			"item_iconname" "weewilly"
@@ -4898,6 +5455,11 @@ Weapon by: 'Quinnz'"
 				{
 					"attribute_class" "mult_clipsize"
 					"value" "0.5"
+				}
+				"max pipebombs decreased"
+				{
+					"attribute_class" "add_max_pipebombs"
+					"value" "-3"
 				}
 				"sticky detonate mode"
 				{
@@ -5058,7 +5620,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Weapon_RocketLauncher_Jump"
 			"item_description" "#TF_Weapon_RocketLauncher_Jump_Desc"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"baseitem" "0"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
@@ -5119,16 +5681,17 @@ Weapon by: 'Quinnz'"
 				}
 			}
 		}
-		"441"
+		"414"
 		{
-			"name" "The Cow Mangler 5000"
-			"first_sale_date" "2011/07/13"
-			"item_class" "tf_weapon_particle_cannon"
+			"name" "The Liberty Launcher"
+			"first_sale_date" "2011/03/23"
+			"item_class" "tf_weapon_rocketlauncher"
 			"craft_class" "weapon"
 			"craft_material_type" "weapon"
 			"capabilities"
 			{
 				"nameable" "1"
+				"can_craft_count" "1"
 			}
 			"tags"
 			{
@@ -5136,25 +5699,26 @@ Weapon by: 'Quinnz'"
 				"can_deal_gib_damage" "1"
 				"can_be_equipped_by_soldier_or_demo" "1"
 				"can_deal_posthumous_damage" "1"
+				"can_deal_critical_damage" "1"
 				"can_deal_long_distance_damage" "1"
 				"can_be_festivized" "1"
 			}
-			"item_logname" "cow_mangler"
-			"item_iconname" "cow_mangler"
 			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_FocusedWaveProjector"
-			"item_name" "#TF_CowMangler"
+			"item_type_name" "#TF_Weapon_RocketLauncher"
+			"item_name" "#TF_LibertyLauncher"
 			"item_slot" "primary"
-			"anim_slot" "primary2"
-			"item_quality" "vintage"
+			"item_quality" "haunted"
+			"item_logname" "liberty_launcher"
+			"item_iconname" "liberty_launcher"
 			"propername" "1"
-			"min_ilevel" "30"
-			"max_ilevel" "30"
+			"min_ilevel" "25"
+			"max_ilevel" "25"
 			"inspect_panel_dist" "68"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_liberty_launcher/c_liberty_launcher"
 			"image_inventory_size_w" "128"
 			"image_inventory_size_h" "82"
-			"model_player" "models/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler.mdl"
+			"model_player" "models/workshop/weapons/c_models/c_liberty_launcher/c_liberty_launcher.mdl"
+			"extra_wearable" "models\player\items\soldier\soldier_sargehat.mdl"
 			"attach_to_hands" "1"
 			"used_by_classes"
 			{
@@ -5162,30 +5726,64 @@ Weapon by: 'Quinnz'"
 			}
 			"static_attrs"
 			{
-				"min_viewmodel_offset" "10 0 -11"
-				"energy weapon no ammo" "1"
-				"energy weapon charged shot" "1"
-				"energy weapon no hurt building" "1"
-				"crits_become_minicrits" "1"
-				"crit mod disabled" "0"
+				"min_viewmodel_offset" "10 -3 -10"
+			}
+			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
+			"drop_sound" "ui/item_heavy_gun_drop.wav"
+			"attributes"
+			{
+				"rocket gravity"
+				{
+					"attribute_class"	"mod_rocket_gravity"
+					"value"				"0.96"
+				}
+				"Projectile speed increased"
+				{
+					"attribute_class" "mult_projectile_speed"
+					"value" "1.4"
+				}
+				"clip size bonus"
+				{
+					"attribute_class" "mult_clipsize"
+					"value" "1.25"
+				}
+				"rocket jump damage reduction"
+				{
+					"attribute_class" "rocket_jump_dmg_reduction"
+					"value" "0.75"
+				}
+				"damage penalty"
+				{
+					"attribute_class" "mult_dmg"
+					"value" "0.8"
+				}
+				"crit mod disabled"
+				{
+					"attribute_class" "mult_crit_chance"
+					"value" "0"
+				}
+				"custom projectile model"
+				{
+					"attribute_class" "custom_projectile_model"
+					"value" "models\weapons\w_models\projectiles\w_rocket_libertylauncher.mdl"
+				}
 			}
 			"visuals"
 			{
-				"sound_single_shot" "Weapon_CowMangler.Single"
-				"sound_burst" "Weapon_CowMangler.SingleCharged"
-				"sound_reload" "Weapon_CowMangler.Reload"
-				"sound_special1" "Weapon_CowMangler.Charging"
-				"sound_special2" "Weapon_CowMangler.Idle"
+				"sound_single_shot" "Weapon_Liberty_Launcher.Single"
+				"sound_burst" "Weapon_Liberty_Launcher.SingleCrit"
+				"player_bodygroups"
+				{
+				"Hat"        "1"
+				}
 				"attached_models_festive"
 				{
 					"0"
 					{
-						"model" "models/workshop/weapons/c_models/c_drg_cowmangler/c_drg_cowmangler_festivizer.mdl"
+						"model" "models/workshop/weapons/c_models/c_liberty_launcher/c_liberty_launcher_festivizer.mdl"
 					}
 				}
 			}
-			"mouse_pressed_sound" "ui/item_heavy_gun_pickup.wav"
-			"drop_sound" "ui/item_heavy_gun_drop.wav"
 		}
 		"730"
 		{
@@ -5217,7 +5815,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "dumpster_device"
 			"item_iconname" "dumpster_device"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"inspect_panel_dist" "68"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_dumpster_device/c_dumpster_device"
 			"image_inventory_size_w" "128"
@@ -5336,7 +5934,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -5414,7 +6012,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -5500,7 +6098,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "feet"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -5600,7 +6198,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Unique_Pickaxe_EscapePlan"
 			"item_logname" "unique_pickaxe_escape"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -5715,9 +6313,8 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_w" "128"
 			"image_inventory_size_h" "82"
 			"model_player" "models/weapons/c_models/c_flamethrower/c_backburner.mdl"
-            "extra_wearable" "models/workshop/player/items/pyro/hwn2021_smiling_somen/hwn2021_smiling_somen.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "unique"
+			"item_quality" "haunted"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -6014,7 +6611,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "45"
 			"model_player" "models/workshop/weapons/c_models/c_drg_manmelter/c_drg_manmelter.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "30"
 			"max_ilevel" "30"
@@ -6143,7 +6740,7 @@ Weapon by: 'Quinnz'"
 			"attach_to_hands" "1"
 			"attach_to_hands_vm_only" "1"
 			"extra_wearable" "models/weapons/c_models/c_rocketpack/c_rocketpack.mdl"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -6268,7 +6865,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/workshop/weapons/c_models/c_sledgehammer/c_sledgehammer.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -6384,7 +6981,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/workshop/weapons/c_models/c_drg_thirddegree/c_drg_thirddegree.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -6517,7 +7114,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Unique_Achievement_StickyLauncher"
 			"item_slot" "secondary"
 			"anim_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"item_logname" "stickybomb_defender"
 			"min_ilevel" "5"
@@ -6605,7 +7202,7 @@ Weapon by: 'Quinnz'"
 			"item_description" "#TF_Weapon_StickyBomb_Jump_Desc"
 			"item_slot" "secondary"
 			"anim_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"baseitem" "0"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
@@ -6672,95 +7269,6 @@ Weapon by: 'Quinnz'"
 				}
 			}
 		}
-		"406"
-		{
-			"name" "The Splendid Screen"
-			"first_sale_date" "2011/03/21"
-			"item_class" "tf_wearable_demoshield"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-				"can_craft_count" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-			}
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Wearable_Shield"
-			"item_logname" "splendid_screen"
-			"item_iconname" "splendid_screen"
-			"item_name" "#TF_SplendidScreen"
-			"item_description" "#TF_SplendidScreen_Desc"
-			"item_slot" "secondary"
-			"equip_region" "arms"
-			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
-			"propername" "1"
-			"min_ilevel" "10"
-			"max_ilevel" "10"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_persian_shield/c_persian_shield"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"inspect_panel_dist" "35"
-			"model_player" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield.mdl"
-			"act_as_wearable" "1"
-			"attach_to_hands" "0"
-			"attach_to_hands_vm_only" "1"
-			"drop_type" "none"
-			"used_by_classes"
-			{
-				"demoman" "1"
-			}
-			"attributes"
-			{
-				"dmg taken from fire reduced"
-				{
-					"attribute_class" "mult_dmgtaken_from_fire"
-					"value" "0.8"
-				}
-				"dmg taken from blast reduced"
-				{
-					"attribute_class" "mult_dmgtaken_from_explosions"
-					"value" "0.8"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class" "allowed_in_medieval_mode"
-					"value" "1"
-				}
-			}
-			"visuals"
-			{
-				"styles"
-				{
-					"0"
-					{
-						"model_player" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield.mdl"
-						"name" "#TF_SplendidScreen_Style1"
-					}
-					"1"
-					{
-						"model_player" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield_spike.mdl"
-						"name" "#TF_SplendidScreen_Style2"
-					}
-					"2"
-					{
-						"model_player" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield_arrow.mdl"
-						"name" "#TF_SplendidScreen_Style3"
-					}
-					"3"
-					{
-						"model_player" "models/workshop/weapons/c_models/c_persian_shield/c_persian_shield_all.mdl"
-						"name" "#TF_SplendidScreen_Style4"
-					}
-				}
-			}
-			"mouse_pressed_sound" "ui/item_wood_pole_pickup.wav"
-			"drop_sound" "ui/item_wood_pole_drop.wav"
-		}
 		"1099"
 		{
 			"name" "The Tide Turner"
@@ -6784,7 +7292,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "arms"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -6854,7 +7362,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Weapon_Sticky_Quickie"
 			"item_slot" "secondary"
 			"anim_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"item_logname" "quickiebomb_launcher"
 			"item_iconname" "quickiebomb_launcher"
@@ -6974,7 +7482,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "ullapool_caber"
 			"item_iconname" "ullapool_caber"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -7077,124 +7585,6 @@ Weapon by: 'Quinnz'"
 				}
 			}
 		}
-		"159"
-		{
-			"name" "The Dalokohs Bar"
-			"first_sale_date" "2010/09/29"
-			"prefab" "weapon_lunchbox"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_heal_allies" "1"
-				"can_extinguish" "1"
-			}
-			"item_name" "#TF_Unique_Lunchbox_Chocolate"
-			"item_description" "#TF_Lunchbox_Chocolate_desc"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_chocolate/c_chocolate"
-			"model_player" "models/workshop/weapons/c_models/c_chocolate/c_chocolate.mdl"
-			"propername" "1"
-			"inspect_panel_dist" "31"
-			"used_by_classes"
-			{
-				"heavy" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "10 0 -11"
-				"item_meter_charge_type" "1"
-				"item_meter_charge_rate" "10"
-				"meter_label" "#TF_Sandwich"
-			}
-			"attributes"
-			{
-				"kill eater score type"
-				{
-					"attribute_class" "kill_eater_score_type"
-					"value" "50"
-				}
-				"lunchbox adds maxhealth bonus"
-				{
-					"attribute_class" "set_weapon_mode"
-					"value" "1"
-				}
-				"special taunt"
-				{
-					"attribute_class" "special_taunt"
-					"value" "1"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class" "allowed_in_medieval_mode"
-					"value" "1"
-				}
-			}
-		}
-		"311"
-		{
-			"name" "The Buffalo Steak Sandvich"
-			"first_sale_date" "2010/12/08"
-			"prefab" "weapon_lunchbox"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_heal_allies" "1"
-			}
-			"item_name" "#TF_BuffaloSteak"
-			"item_description" "#TF_BuffaloSteak_Desc"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_buffalo_steak/c_buffalo_steak"
-			"model_player" "models/workshop/weapons/c_models/c_buffalo_steak/c_buffalo_steak.mdl"
-			"propername" "1"
-			"inspect_panel_dist" "31"
-			"used_by_classes"
-			{
-				"heavy" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "10 0 -11"
-				"item_meter_charge_type" "1"
-				"item_meter_charge_rate" "30"
-				"meter_label" "#TF_Sandwich"
-			}
-			"attributes"
-			{
-				"kill eater score type"
-				{
-					"attribute_class" "kill_eater_score_type"
-					"value" "50"
-				}
-				"lunchbox adds minicrits"
-				{
-					"attribute_class" "set_weapon_mode"
-					"value" "2"
-				}
-				"special taunt"
-				{
-					"attribute_class" "special_taunt"
-					"value" "1"
-				}
-				"allowed in medieval mode"
-				{
-					"attribute_class" "allowed_in_medieval_mode"
-					"value" "1"
-				}
-				"energy buff dmg taken multiplier"
-				{
-					"attribute_class" "energy_buff_dmg_taken_multiplier"
-					"value" "1.2"
-				}
-			}
-		}
 		"1190"
 		{
 			"name" "The Second Banana"
@@ -7260,7 +7650,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "53"
 			"model_player" "models/weapons/c_models/c_boxing_gloves/c_boxing_gloves.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "7"
 			"max_ilevel" "7"
@@ -7355,87 +7745,6 @@ Weapon by: 'Quinnz'"
 				}
 			}
 		}
-		"310"
-		{
-			"name" "Warrior\'s Spirit"
-			"first_sale_date" "2010/12/08"
-			"item_class" "tf_weapon_fists"
-			"craft_class" "weapon"
-			"craft_material_type" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_deal_critical_damage" "1"
-			}
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_Gloves"
-			"item_name" "#TF_WarriorsSpirit"
-			"item_slot" "melee"
-			"item_logname" "warrior_spirit"
-			"item_iconname" "warrior_spirit"
-			"image_inventory" "backpack/workshop/weapons/c_models/c_bear_claw/c_bear_claw"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"inspect_panel_dist" "53"
-			"model_player" "models/workshop/weapons/c_models/c_bear_claw/c_bear_claw.mdl"
-			"attach_to_hands" "1"
-			"item_quality" "vintage"
-			"min_ilevel" "10"
-			"max_ilevel" "10"
-			"propername" "1"
-			"used_by_classes"
-			{
-				"heavy" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "10 0 -11"
-			}
-			"attributes"
-			{
-				"provide on active"
-				{
-					"attribute_class" "provide_on_active"
-					"value" "1"
-				}
-				"dmg taken increased"
-				{
-					"attribute_class" "mult_dmgtaken"
-					"value" "1.3"
-				}
-				"damage bonus"
-				{
-					"attribute_class" "mult_dmg"
-					"value" "1.3"
-				}
-				"heal on kill"
-				{
-					"attribute_class" "heal_on_kill"
-					"value" "50"
-				}
-			}
-			"visuals"
-			{
-				"sound_melee_miss" "Weapon_BoxingGloves.Miss"
-				"sound_melee_hit" "Weapon_BoxingGloves.HitFlesh"
-				"sound_melee_hit_world" "Weapon_BoxingGloves.HitWorld"
-				"sound_burst" "Weapon_BoxingGloves.MissCrit"
-				"animation_replacement"
-				{
-					"ACT_VM_IDLE" "ACT_FISTS_VM_IDLE"
-					"ACT_VM_HITLEFT" "ACT_FISTS_VM_HITLEFT"
-					"ACT_VM_HITRIGHT" "ACT_FISTS_VM_HITRIGHT"
-					"ACT_VM_SWINGHARD" "ACT_FISTS_VM_SWINGHARD"
-					"ACT_VM_DRAW" "ACT_FISTS_VM_DRAW"
-				}
-			}
-			"mouse_pressed_sound" "ui/item_boxing_gloves_pickup.wav"
-			"drop_sound" "ui/item_boxing_gloves_drop.wav"
-		}
 		"331"
 		{
 			"name" "Fists of Steel"
@@ -7465,7 +7774,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "53"
 			"model_player" "models/workshop/weapons/c_models/c_fists_of_steel/c_fists_of_steel.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"propername" "1"
@@ -7555,7 +7864,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "53"
 			"model_player" "models/workshop/weapons/c_models/c_eviction_notice/c_eviction_notice.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"propername" "1"
@@ -7567,7 +7876,6 @@ Weapon by: 'Quinnz'"
 			{
 				"min_viewmodel_offset" "10 0 -8"
 				"mult_player_movespeed_active" "1.15"
-				"mod_maxhealth_drain_rate" "5.0"
 			}
 			"attributes"
 			{
@@ -7638,7 +7946,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "53"
 			"model_player" "models/workshop/weapons/c_models/c_xms_gloves/c_xms_gloves.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -7766,7 +8074,7 @@ Weapon by: 'Quinnz'"
 			"item_description" "#TF_DEX_Shotgun_Desc"
 			"item_slot" "primary"
 			"show_in_armory" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -7891,7 +8199,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Unique_Robot_Arm"
 			"item_slot" "melee"
 			"equip_region" "arms"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"anim_slot" "item2"
 			"min_ilevel" "15"
 			"max_ilevel" "15"
@@ -7993,7 +8301,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Wrench"
 			"item_name" "#TF_Unique_Combat_Wrench"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "20"
 			"max_ilevel" "20"
 			"propername" "1"
@@ -8106,7 +8414,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Wrenchmotron"
 			"item_description" "#TF_Wrenchmotron_Desc"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"item_logname" "eureka_effect"
 			"item_iconname" "eureka_effect"
 			"min_ilevel" "20"
@@ -8207,7 +8515,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/weapons/c_models/c_leechgun/c_leechgun.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "50"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -8266,6 +8574,18 @@ Weapon by: 'Quinnz'"
 			"mouse_pressed_sound" "ui/item_light_gun_pickup.wav"
 			"drop_sound" "ui/item_light_gun_drop.wav"
 		}
+		"305"
+		{
+			"name" "The Crusader\'s Crossbow"
+			"first_sale_date" "2010/12/08"
+			"prefab" "weapon_crusaders_crossbow paintkit_base"
+			"particle_suffix" "crusaders_crossbow"
+			"extra_wearable" "models/player/items/medic/berliners_bucket_helm.mdl"
+			"tags"
+			{
+				"can_be_festivized" "1"
+			}
+		}
 		"412"
 		{
 			"name" "The Overdose"
@@ -8298,7 +8618,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/weapons/c_models/c_proto_syringegun/c_proto_syringegun.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -8399,7 +8719,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/weapons/c_models/c_proto_medigun/c_proto_medigun.mdl"
 			"extra_wearable" "models/weapons/c_models/c_proto_backpack/c_proto_backpack.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "8"
 			"max_ilevel" "8"
 			"used_by_classes"
@@ -8412,6 +8732,11 @@ Weapon by: 'Quinnz'"
 			}
 			"attributes"
 			{
+				"boost speed from patient"
+				{
+					"attribute_class"	"boost_speed_from_patient"
+					"value"				"1"
+				}
 				"lunchbox adds minicrits"
 				{
 					"attribute_class" "set_weapon_mode"
@@ -8541,7 +8866,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "40"
 			"model_player" "models/weapons/c_models/c_hippocrates_bust/c_hippocrates_bust.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -8662,7 +8987,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_ClassicSniperRifle"
 			"item_description" "#TF_ClassicSniperRifle_Desc"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -8756,7 +9081,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Pro_SMG"
 			"item_description" "#TF_Pro_SMG_Desc"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_pro_smg/c_pro_smg"
@@ -8839,7 +9164,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -8901,7 +9226,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "0"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -8954,7 +9279,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -9022,7 +9347,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "45"
 			"model_player" "models/workshop/weapons/c_models/c_croc_knife/c_croc_knife.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -9155,7 +9480,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Revolver"
 			"item_name" "#TF_LEtranger"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "0"
 			"item_logname" "letranger"
 			"item_iconname" "letranger"
@@ -9232,7 +9557,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Revolver"
 			"item_name" "#TF_Enforcer"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"item_logname" "enforcer"
 			"item_iconname" "enforcer"
@@ -9289,84 +9614,6 @@ Weapon by: 'Quinnz'"
 					}
 				}
 			}
-		}
-		"525"
-		{
-			"name" "The Diamondback"
-			"first_sale_date" "2011/08/11"
-			"item_class" "tf_weapon_revolver"
-			"craft_material_type" "weapon"
-			"craft_class" "weapon"
-			"capabilities"
-			{
-				"nameable" "1"
-				"can_craft_count" "1"
-			}
-			"tags"
-			{
-				"can_deal_damage" "1"
-				"can_deal_critical_damage" "1"
-				"can_deal_mvm_penetration_damage" "1"
-				"can_deal_long_distance_damage" "1"
-				"can_be_festivized" "1"
-			}
-			"show_in_armory" "1"
-			"item_type_name" "#TF_Weapon_Revolver"
-			"item_name" "#TF_DEX_Revolver"
-			"item_description" "#TF_DEX_Revolver_Desc"
-			"item_slot" "secondary"
-			"item_quality" "vintage"
-			"propername" "1"
-			"item_logname" "diamondback"
-			"item_iconname" "diamondback"
-			"min_ilevel" "5"
-			"max_ilevel" "5"
-			"image_inventory" "backpack/workshop_partner/weapons/c_models/c_dex_revolver/c_dex_revolver"
-			"image_inventory_size_w" "128"
-			"image_inventory_size_h" "82"
-			"inspect_panel_dist" "32"
-			"model_player" "models/workshop_partner/weapons/c_models/c_dex_revolver/c_dex_revolver.mdl"
-			"attach_to_hands" "1"
-			"used_by_classes"
-			{
-				"spy" "1"
-			}
-			"static_attrs"
-			{
-				"min_viewmodel_offset" "10 0 -6"
-			}
-			"attributes"
-			{
-				"sapper kills collect crits"
-				{
-					"attribute_class" "sapper_kills_collect_crits"
-					"value" "1"
-				}
-				"damage penalty"
-				{
-					"attribute_class" "mult_dmg"
-					"value" "0.85"
-				}
-				"crit mod disabled"
-				{
-					"attribute_class" "mult_crit_chance"
-					"value" "0"
-				}
-			}
-			"visuals"
-			{
-				"sound_single_shot" "Weapon_Diamond_Back.Single"
-				"sound_burst" "Weapon_Diamond_Back.SingleCrit"
-				"attached_models_festive"
-				{
-					"0"
-					{
-						"model" "models/workshop_partner/weapons/c_models/c_dex_revolver/c_dex_revolver_festivizer.mdl"
-					}
-				}
-			}
-			"mouse_pressed_sound" "ui/item_light_gun_pickup.wav"
-			"drop_sound" "ui/item_light_gun_drop.wav"
 		}
 		"810"
 		{
@@ -9617,7 +9864,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Unique_Achievement_CloakWatch"
 			"item_slot" "pda2"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -9681,7 +9928,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Unique_Achievement_FeignWatch"
 			"item_slot" "pda2"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -9816,7 +10063,7 @@ Weapon by: 'Quinnz'"
 			"item_iconname" "force_a_nature"
 			"item_slot" "primary"
 			"anim_slot" "item2"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -9928,7 +10175,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_TheShortstop"
 			"item_slot" "primary"
 			"anim_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"item_logname" "shortstop"
 			"item_iconname" "shortstop"
 			"propername" "1"
@@ -10031,7 +10278,7 @@ Weapon by: 'Quinnz'"
 			"item_iconname" "soda_popper"
 			"item_slot" "primary"
 			"anim_slot" "item2"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -10326,7 +10573,7 @@ Weapon by: 'Quinnz'"
 			"item_iconname" "guillotine"
 			"item_slot" "secondary"
 			"anim_slot" "item1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"attach_to_hands" "1"
 			"image_inventory" "backpack/workshop_partner/weapons/c_models/c_sd_cleaver/c_sd_cleaver"
@@ -10410,7 +10657,7 @@ Weapon by: 'Quinnz'"
 			"item_description" "#TF_MadMilk_Desc"
 			"item_name" "#TF_MadMilk"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"anim_slot" "item1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -10480,7 +10727,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_RocketLauncher"
 			"item_name" "#TF_TheBlackBox"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -10584,7 +10831,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "airstrike"
 			"item_iconname" "airstrike"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
 			"image_inventory" "backpack/workshop/weapons/c_models/c_atom_launcher/c_atom_launcher"
@@ -10678,7 +10925,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "reserve_shooter"
 			"item_iconname" "reserve_shooter"
 			"show_in_armory" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -10751,7 +10998,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "secondary"
 			"equip_region" "back"
 			"anim_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -10827,7 +11074,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "panic_attack"
 			"item_iconname" "panic_attack"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "99"
 			"propername" "1"
@@ -10906,7 +11153,7 @@ Weapon by: 'Quinnz'"
 			"item_logname" "disciplinary_action"
 			"item_iconname" "disciplinary_action"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -10962,6 +11209,82 @@ Weapon by: 'Quinnz'"
 			}
 			"mouse_pressed_sound" "ui/item_metal_weapon_pickup.wav"
 			"drop_sound" "ui/item_metal_weapon_drop.wav"
+		}
+		"weapon_crusaders_crossbow"
+		{
+			"enabled" "1"
+			"item_class" "tf_weapon_crossbow"
+			"craft_class" "weapon"
+			"craft_material_type" "weapon"
+			"capabilities"
+			{
+				"nameable" "1"
+			}
+			"tags"
+			{
+				"can_deal_damage" "1"
+				"can_deal_posthumous_damage" "1"
+				"can_deal_critical_damage" "1"
+				"can_deal_long_distance_damage" "1"
+				"can_heal_allies" "1"
+			}
+			"base_item_name" "The Crusader\'s Crossbow"
+			"item_type_name" "#TF_Weapon_Crossbow"
+			"item_name" "#TF_CrusadersCrossbow"
+			"item_description" "Fires healing bombs that give residual healing to allies
+This weapon will reload automatically when not active"
+			"item_logname" "crusaders_crossbow"
+			"item_iconname" "crusaders_crossbow"
+			"item_slot" "primary"
+			"item_quality" "unique"
+			"min_ilevel" "15"
+			"max_ilevel" "15"
+			"image_inventory" "backpack/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow"
+			"image_inventory_size_w" "128"
+			"image_inventory_size_h" "82"
+			"model_player" "models/workshop/weapons/c_models/c_crusaders_crossbow/c_crusaders_crossbow.mdl"
+			"attach_to_hands" "1"
+			"inspect_panel_dist" "42"
+			"used_by_classes"
+			{
+				"medic" "1"
+			}
+			"static_attrs"
+			{
+				"min_viewmodel_offset" "10 0 -14"
+				"weapon_stattrak_module_scale" "0.608"
+			}
+			"attributes"
+			{
+				"add uber charge on hit"
+				{
+					"attribute_class" "add_onhit_ubercharge"
+					"value" "0.1"
+				}
+				"maxammo primary reduced"
+				{
+					"attribute_class" "mult_maxammo_primary"
+					"value" "0.25"
+				}
+				"centerfire projectile"
+				{
+					"attribute_class"	"centerfire_projectile"
+					"value"	"1"
+				}
+				"allowed in medieval mode"
+				{
+					"attribute_class" "allowed_in_medieval_mode"
+					"value" "1"
+				}
+			}
+			"visuals"
+			{
+				"sound_single_shot" "Weapon_CrusadersCrossbow.Single"
+				"sound_burst" "Weapon_CrusadersCrossbow.SingleCrit"
+			}
+			"mouse_pressed_sound" "ui/item_light_gun_pickup.wav"
+			"drop_sound" "ui/item_light_gun_drop.wav"
+			"xifier_class_remap" "crusaders_crossbow"
 		}
 		"weapon_backburner"
 		{
@@ -11035,7 +11358,7 @@ Weapon by: 'Quinnz'"
 			"extra_wearable" "models/player/bluearchive/momoi_midori_halo.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "91"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11128,7 +11451,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_detonator/c_detonator.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "40"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "0"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11217,7 +11540,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_scorch_shot/c_scorch_shot.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "30"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11300,7 +11623,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/weapons/c_models/c_axtinguisher/c_axtinguisher_pyro.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "55"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11344,7 +11667,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_powerjack/c_powerjack.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "65"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -11413,7 +11736,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/workshop/weapons/c_models/c_back_scratcher/c_back_scratcher.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11478,7 +11801,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/workshop_partner/weapons/c_models/c_sd_neonsign/c_sd_neonsign.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"xifier_class_remap" "neon_annihilator"
 			"used_by_classes"
@@ -11558,7 +11881,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_LochNLoad"
 			"item_slot" "primary"
 			"anim_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"propername" "1"
@@ -11643,7 +11966,7 @@ Weapon by: 'Quinnz'"
 			"item_slot" "primary"
 			"equip_region" "feet"
 			"anim_slot" "FORCE_NOT_USED"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "0"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -11718,7 +12041,7 @@ Weapon by: 'Quinnz'"
 			"item_description" "#TF_Weapon_Cannon_desc"
 			"item_slot" "primary"
 			"anim_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"propername" "1"
@@ -11807,7 +12130,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_Weapon_Iron_bomber"
 			"item_slot" "primary"
 			"anim_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "99"
 			"propername" "1"
@@ -11872,7 +12195,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Sword"
 			"item_slot" "melee"
 			"anim_slot" "item1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
 			"image_inventory_size_w" "128"
@@ -12078,7 +12401,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_gatling_gun/c_gatling_gun.mdl"
 			"attach_to_hands" "1"
 			"propername" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
 			"used_by_classes"
@@ -12155,7 +12478,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_tomislav/c_tomislav.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "88"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
 			"used_by_classes"
@@ -12298,7 +12621,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop_partner/weapons/c_models/c_canton/c_canton.mdl"
 			"attach_to_hands" "1"
 			"propername" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"xifier_class_remap" "long_heatmaker"
 			"used_by_classes"
 			{
@@ -12368,7 +12691,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_RussianRiot"
 			"item_slot" "secondary"
 			"show_in_armory" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -12423,7 +12746,7 @@ Weapon by: 'Quinnz'"
 			"anim_slot" "ITEM1"
 			"image_inventory_size_w" "128"
 			"image_inventory_size_h" "82"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
 			"attach_to_hands" "1"
@@ -12519,7 +12842,7 @@ Weapon by: 'Quinnz'"
 			"inspect_panel_dist" "53"
 			"model_player" "models/weapons/c_models/c_boxing_gloves/c_boxing_gloves.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
 			"used_by_classes"
@@ -12595,7 +12918,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Shotgun"
 			"item_name" "#TF_Unique_Sentry_Shotgun"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
 			"item_logname" "frontier_justice"
@@ -12669,7 +12992,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Shotgun"
 			"item_name" "#TF_Weapon_Shotgun_Building_Rescue"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "1"
 			"max_ilevel" "100"
@@ -12761,7 +13084,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Wrench"
 			"item_name" "#TF_Jag"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "15"
 			"max_ilevel" "15"
 			"propername" "1"
@@ -12851,7 +13174,7 @@ Weapon by: 'Quinnz'"
 			"model_player" "models/workshop/weapons/c_models/c_amputator/c_amputator.mdl"
 			"attach_to_hands" "1"
 			"inspect_panel_dist" "42"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "15"
 			"max_ilevel" "15"
@@ -12932,7 +13255,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_BazaarBargain"
 			"item_description" "#TF_BazaarBargain_Desc"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "10"
 			"max_ilevel" "10"
@@ -12990,7 +13313,7 @@ Weapon by: 'Quinnz'"
 			"item_name" "#TF_DEX_Rifle"
 			"item_description" "#TF_DEX_Rifle_Desc"
 			"item_slot" "primary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"item_logname" "machina"
 			"item_iconname" "machina"
@@ -13069,7 +13392,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Jar"
 			"item_name" "#TF_Unique_Achievement_Jar"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"anim_slot" "item1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -13145,7 +13468,7 @@ Weapon by: 'Quinnz'"
 			"image_inventory_size_h" "82"
 			"model_player" "models/workshop/weapons/c_models/c_scimitar/c_scimitar.mdl"
 			"attach_to_hands" "1"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"min_ilevel" "5"
 			"max_ilevel" "5"
@@ -13197,7 +13520,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Revolver"
 			"item_name" "#TF_Unique_Achievement_Revolver"
 			"item_slot" "secondary"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"propername" "1"
 			"item_logname" "ambassador"
 			"item_iconname" "ambassador"
@@ -13313,7 +13636,7 @@ Weapon by: 'Quinnz'"
 			"show_in_armory" "1"
 			"item_type_name" "#TF_Weapon_Knife"
 			"item_slot" "melee"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"min_ilevel" "1"
 			"max_ilevel" "1"
 			"image_inventory_size_w" "128"
@@ -13360,7 +13683,7 @@ Weapon by: 'Quinnz'"
 			"item_type_name" "#TF_Weapon_Spy_Sapper"
 			"item_name" "#TF_SD_Sapper"
 			"item_slot" "building"
-			"item_quality" "vintage"
+			"item_quality" "unique"
 			"item_logname" "recorder"
 			"item_iconname" "recorder"
 			"image_inventory" "backpack/workshop_partner/weapons/c_models/c_sd_sapper/c_sd_sapper"
@@ -22754,6 +23077,14 @@ Weapon by: 'Quinnz'"
 			"effect_type"	"positive"
 			"stored_as_integer"	"1"
 		}
+		"10000"
+        {
+            "name"                    "boost speed from patient"
+            "attribute_class"        "boost_speed_from_patient"
+            "description_format"    "value_is_additive"
+            "effect_type"            "positive"
+            "stored_as_integer"        "0"
+        }
 		"5124"
 		{
 			"name"	"healing received on active bonus"

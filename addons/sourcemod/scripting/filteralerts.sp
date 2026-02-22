@@ -4,6 +4,8 @@
 #include <sourcemod>
 #include <morecolors>
 
+native int Filters_GetChatName(int client, char[] buffer, int maxlen);
+
 ConVar g_cvarEnabled;
 ConVar g_cvarVoice;
 ConVar g_cvarDisconnect;
@@ -12,6 +14,13 @@ ConVar g_cvarCvar;
 Database g_hDb = null;
 bool g_bDbReady = false;
 bool g_bSuppressNextTeamAlert[MAXPLAYERS + 1];
+float g_fSuppressTeamAlertsUntil = 0.0;
+
+public APLRes AskPluginLoad2(Handle plugin, bool late, char[] error, int err_max)
+{
+	MarkNativeAsOptional("Filters_GetChatName");
+	return APLRes_Success;
+}
 
 void FilterAlerts_SQLConnect()
 {
@@ -98,9 +107,20 @@ static void PrintTeamJoinAlert(int client, int team, const char[] dbColor, const
 		BuildFallbackNameColorTag(team, nameColor, sizeof(nameColor));
 	}
 
+	char coloredName[192];
+	coloredName[0] = '\0';
+	if (GetFeatureStatus(FeatureType_Native, "Filters_GetChatName") == FeatureStatus_Available
+		&& Filters_GetChatName(client, coloredName, sizeof(coloredName)) && coloredName[0] != '\0')
+	{
+		char outputNative[320];
+		Format(outputNative, sizeof(outputNative), "%s %s", coloredName, teamText);
+		CPrintToChatAllEx(client, "%s", outputNative);
+		return;
+	}
+
 	char output[256];
 	Format(output, sizeof(output), "%s%s{default} %s", nameColor, nameText, teamText);
-	CPrintToChatAll(output);
+	CPrintToChatAllEx(client, "%s", output);
 }
 
 public void FilterAlerts_TeamColorCallback(Database db, DBResultSet results, const char[] error, any data)
@@ -154,6 +174,7 @@ public void OnPluginStart()
 {
 	CreateConVar("sm_tidychat_version", PLUGIN_VERSION, "Tidy Chat Version", FCVAR_SPONLY|FCVAR_REPLICATED|FCVAR_NOTIFY);
 	CreateNative("FilterAlerts_MarkAutobalance", Native_FilterAlerts_MarkAutobalance);
+	CreateNative("FilterAlerts_SuppressTeamAlertWindow", Native_FilterAlerts_SuppressTeamAlertWindow);
 
 	g_cvarEnabled = CreateConVar("sm_tidychat_on", "1", "0/1 On/off");
 	g_cvarVoice = CreateConVar("sm_tidychat_voice", "1", "0/1 Tidy (Voice) messages");
@@ -183,6 +204,22 @@ public any Native_FilterAlerts_MarkAutobalance(Handle plugin, int numParams)
 	if (client > 0 && client <= MaxClients)
 	{
 		g_bSuppressNextTeamAlert[client] = true;
+	}
+	return 1;
+}
+
+public any Native_FilterAlerts_SuppressTeamAlertWindow(Handle plugin, int numParams)
+{
+	float seconds = view_as<float>(GetNativeCell(1));
+	if (seconds <= 0.0)
+	{
+		return 0;
+	}
+
+	float until = GetGameTime() + seconds;
+	if (until > g_fSuppressTeamAlertsUntil)
+	{
+		g_fSuppressTeamAlertsUntil = until;
 	}
 	return 1;
 }
@@ -247,6 +284,15 @@ public Action Event_PlayerTeam(Event event, const char[] name, bool dontBroadcas
 		{
 			if(!event.GetBool("silent"))
 			{
+	            if (g_fSuppressTeamAlertsUntil > 0.0)
+	            {
+	            	if (GetGameTime() < g_fSuppressTeamAlertsUntil)
+	            	{
+	            		event.BroadcastDisabled = true;
+	            		return Plugin_Handled;
+	            	}
+	            	g_fSuppressTeamAlertsUntil = 0.0;
+	            }
 	            int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	            if ((!client) || IsFakeClient(client)) return Plugin_Handled;
 	            if (g_bSuppressNextTeamAlert[client])

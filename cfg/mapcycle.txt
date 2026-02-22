@@ -45,7 +45,6 @@ cp_standin_final
 cp_sulfur
 cp_sunshine
 cp_tidal_v3
-cp_whiterock_letty
 cp_yukon_final
 
 // Capture the Flag

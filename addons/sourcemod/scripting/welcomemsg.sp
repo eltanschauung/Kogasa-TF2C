@@ -138,7 +138,7 @@ public Action Command_Changes(int client, int args)
 
 	CPrintToChat(client, "Buffed: {green}Ambassador | Syringe Guns | Shortstop | Candy Cane | Fan o War | Baby Face | B. Scatter | S. Jumper | Scottish Res. | Booties");
 	CPrintToChat(client, "{green}Base Jumper | Gunboats | A. Strike | Beggars |  Gloves of Running | Huo Long | Huntsman");
-	CPrintToChat(client, "Nerfed or removed:{red} AA Cannon | RPG | Cyclops | Dynamite| L'Escampette | Demo Shields | Hunting Revolver | Tranq. Gun | Mine Layer | Vaccinator | Short Circuit | Natascha | Sentries");
+	CPrintToChat(client, "Nerfed or removed:{red} AA Cannon | RPG | Cyclops | L'Escampette | Demo Shields | Hunting Revolver | Tranq. Gun | Mine Layer | Vaccinator | Short Circuit | B. Beast | Natascha | Sentries");
 
 	return Plugin_Handled;
 }
@@ -185,5 +185,5 @@ public Action Timer_NewsAfterWelcome(Handle timer, any userid)
 
 void SendNewsMessage(int client)
 {
-	CPrintToChat(client, "{gold}News: {default}{gold}Re-added many plugins from TF2 like !tp,{default}Added autoscramble and !forcescramble for admins, added healing and damage to !points, nerfed Eephus Civilian, added a frag grenade for Soldier, added back dynamite");
+	CPrintToChat(client, "{gold}News: {default}Added new Rocket Launchers, reworked the R.P.G., added the Old Panic Attack, added the Crusader's Crossbow, a Medic shotgun and added medigun partner speed, added Whalescramble");
 }
