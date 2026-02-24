@@ -452,6 +452,7 @@ static void ResetVotes()
 static bool StartWhaleScramble(int issuer, bool broadcastFailures, bool allowLowPop)
 {
     LogWhale("StartWhaleScramble: issuer=%d allowLowPop=%d.", issuer, allowLowPop ? 1 : 0);
+    g_iRoundsSinceAuto = 0;
     int totalPlayers = 0;
     int redCount = 0;
     int bluCount = 0;
