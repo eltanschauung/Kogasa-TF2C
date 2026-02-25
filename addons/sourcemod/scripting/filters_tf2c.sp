@@ -13,6 +13,7 @@
 #define MAX_COMMANDS 64
 #define FILTERS_OUTBOX_CLEANUP_INTERVAL 120
 #define FILTERS_OUTBOX_RETENTION_SECONDS 3600
+#define FILTERS_CHAT_RETENTION_SECONDS 86400
 #define FILTERS_IGNORED_STEAMID64 "76561199812613650" // [U:1:1852347922]
 
 // Player state structure
@@ -112,6 +113,7 @@ int g_iHostPort = 27015;
 bool g_bOutboxStampReady = false;
 int g_iPendingSchemaQueries = 0;
 int g_iLastOutboxCleanup = 0;
+int g_iLastChatCleanup = 0;
 
 bool Filters_DebugEnabled()
 {
@@ -724,6 +726,7 @@ public void Filters_OutboxQueryCallback(Database db, DBResultSet results, const 
         Filters_MarkOutboxDelivered(id);
     }
     Filters_MaybeCleanupOutbox();
+    Filters_MaybeCleanupChatHistory();
 }
 
 static void Filters_MarkOutboxDelivered(int rowId)
@@ -765,6 +768,30 @@ static void Filters_MaybeCleanupOutbox()
     char query[128];
     Format(query, sizeof(query),
         "DELETE FROM whaletracker_chat_outbox WHERE created_at < %d",
+        cutoff);
+    g_hFiltersDb.Query(Filters_SimpleSqlCallback, query);
+}
+
+static void Filters_MaybeCleanupChatHistory()
+{
+    if (!g_bDbReady || g_hFiltersDb == null)
+    {
+        return;
+    }
+    int now = GetTime();
+    if (g_iLastChatCleanup != 0 && now - g_iLastChatCleanup < FILTERS_OUTBOX_CLEANUP_INTERVAL)
+    {
+        return;
+    }
+    g_iLastChatCleanup = now;
+    int cutoff = now - FILTERS_CHAT_RETENTION_SECONDS;
+    if (cutoff <= 0)
+    {
+        return;
+    }
+    char query[128];
+    Format(query, sizeof(query),
+        "DELETE FROM whaletracker_chat WHERE created_at < %d",
         cutoff);
     g_hFiltersDb.Query(Filters_SimpleSqlCallback, query);
 }
@@ -1589,13 +1616,28 @@ static bool Filters_ShouldReceiveChat(int receiver)
 
 static void Filters_PrintToChatAll(const char[] message)
 {
+    // Process morecolors tags once, then send SayText to each client
+    char buffer[512];
+    Format(buffer, sizeof(buffer), "\x01%s", message);
+    CReplaceColorCodes(buffer);
+
     for (int i = 1; i <= MaxClients; i++)
     {
         if (!Filters_ShouldReceiveChat(i))
         {
             continue;
         }
-        CPrintToChat(i, "%s", message);
+
+        int clients[1];
+        clients[0] = i;
+        Handle msg = StartMessage("SayText", clients, 1, USERMSG_RELIABLE | USERMSG_BLOCKHOOKS);
+        if (msg != INVALID_HANDLE)
+        {
+            BfWriteByte(msg, 0);
+            BfWriteString(msg, buffer);
+            BfWriteByte(msg, 1);
+            EndMessage();
+        }
     }
 }
 
@@ -1606,7 +1648,23 @@ static void Filters_SendChatToReceiver(int receiver, int sender, const char[] me
         return;
     }
 
-    CPrintToChatEx(receiver, sender, "%s", message);
+    // Process morecolors tags into raw color bytes
+    char buffer[512];
+    Format(buffer, sizeof(buffer), "\x01%s", message);
+    CReplaceColorCodes(buffer, sender);
+
+    // Send as SayText instead of SayText2 to bypass the buggy client-side
+    // FilterText race condition that drops messages for high-ping players.
+    int clients[1];
+    clients[0] = receiver;
+    Handle msg = StartMessage("SayText", clients, 1, USERMSG_RELIABLE | USERMSG_BLOCKHOOKS);
+    if (msg != INVALID_HANDLE)
+    {
+        BfWriteByte(msg, sender);
+        BfWriteString(msg, buffer);
+        BfWriteByte(msg, 1);
+        EndMessage();
+    }
 }
 
 static void Filters_PrintToChatAllEx(int sender, const char[] message)
