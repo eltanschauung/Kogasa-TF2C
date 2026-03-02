@@ -59,19 +59,12 @@ public void OnPluginStart()
     g_hDiffThreshold = CreateConVar("sm_autobalance_diff", "1", "Autobalance when team size difference is above this value.", _, true, 1.0, true, 10.0);
     BuildPath(Path_SM, g_sLogPath, sizeof(g_sLogPath), "logs/autobalance.log");
     LogToFileEx(g_sLogPath, "[autobalance_4teams] Plugin started.");
-    HookEvent("teamplay_round_win", Event_RoundEnd);
-    HookEvent("teamplay_round_stalemate", Event_RoundEnd);
 
     ApplyServerBalanceCvars(true);
 }
 
 public void OnMapStart()
 {
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        g_fImmunityExpiry[i] = 0.0;
-    }
-
     if (g_hAutoBalanceTimer != INVALID_HANDLE)
     {
         KillTimer(g_hAutoBalanceTimer);
@@ -102,15 +95,6 @@ public void OnClientDisconnect(int client)
 {
     if (client <= 0 || client > MaxClients) return;
     g_fImmunityExpiry[client] = 0.0;
-}
-
-public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
-{
-    // Clear autobalance immunity every round, not just when the map changes.
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        g_fImmunityExpiry[i] = 0.0;
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +407,7 @@ static bool IsEligiblePlayerForce(int client, int team)
     if (client <= 0 || client > MaxClients) return false;
     if (!IsClientInGame(client) || IsFakeClient(client)) return false;
     if (GetClientTeam(client) != team) return false;
+    if (IsClientImmune(client)) return false;
 
     return true;
 }
