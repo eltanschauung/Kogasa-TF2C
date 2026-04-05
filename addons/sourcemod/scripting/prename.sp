@@ -10,17 +10,14 @@
 #define MAX_RENAME 64
 
 StringMap g_IdRules = null;
-StringMap g_OutputMap = null;
 Database g_Db = null;
 bool g_DbReady = false;
-char g_DebugLogPath[PLATFORM_MAX_PATH];
-bool g_DebugMigrate = false;
 
 public Plugin myinfo =
 {
     name = "prename",
     author = "Hombre",
-    description = "Permanently rename players on join based on substring rules.",
+    description = "Permanently rename players on join based on SteamID rules.",
     version = PLUGIN_VERSION,
     url = ""
 };
@@ -28,13 +25,9 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
     g_IdRules = new StringMap();
-    g_OutputMap = new StringMap();
 
     RegAdminCmd("sm_prename", Command_Prename, ADMFLAG_SLAY, "sm_prename <name_substring|steamid> <newname>");
     RegAdminCmd("sm_reset", Command_PrenameReset, ADMFLAG_SLAY, "sm_reset <name_substring|steamid> - Removes a prename rule");
-    RegAdminCmd("sm_migrate", Command_Migrate, ADMFLAG_SLAY, "sm_migrate - Migrates legacy name rules to SteamID rules for connected clients");
-
-    BuildPath(Path_SM, g_DebugLogPath, sizeof(g_DebugLogPath), "logs/prename_migrate.log");
 
     SQL_TConnect(SQL_OnConnect, DB_CONFIG);
 }
@@ -58,17 +51,13 @@ public Action Timer_ApplyPrename(Handle timer, any userId)
 
 static bool ApplyPrename(int client)
 {
-    if (!g_DbReady || g_IdRules == null || g_OutputMap == null)
+    if (!g_DbReady || g_IdRules == null)
     {
         return false;
     }
 
     char currentName[MAX_NAME_LENGTH];
     GetClientName(client, currentName, sizeof(currentName));
-
-    char lowerName[MAX_NAME_LENGTH];
-    strcopy(lowerName, sizeof(lowerName), currentName);
-    ToLowercaseInPlace(lowerName, sizeof(lowerName));
 
     char steam2[32];
     char steam64[32];
@@ -81,28 +70,10 @@ static bool ApplyPrename(int client)
         {
             SetClientName(client, rename);
         }
-        return false;
+        return true;
     }
 
-    char output[MAX_RENAME];
-    if (!TryGetOutputMatch(lowerName, output, sizeof(output)))
-    {
-        return false;
-    }
-
-    char migrateId[32];
-    GetPreferredClientId(steam64, steam2, migrateId, sizeof(migrateId));
-    if (migrateId[0])
-    {
-        SaveRule(migrateId, output);
-        SetIdRuleCache(migrateId, output);
-    }
-
-    if (!StrEqual(currentName, output, false))
-    {
-        SetClientName(client, output);
-    }
-    return true;
+    return false;
 }
 
 public Action Command_Prename(int client, int args)
@@ -355,77 +326,6 @@ static int FindClientBySteam2(const char[] steam2)
     return -1;
 }
 
-public Action Command_Migrate(int client, int args)
-{
-    int migrated = 0;
-    int processed = 0;
-
-    g_DebugMigrate = true;
-    DebugLog("---- migrate start ----");
-    DebugLog("db_ready=%d id_rules=%d output_rules=%d", g_DbReady ? 1 : 0, GetStringMapCount(g_IdRules), GetStringMapCount(g_OutputMap));
-
-    for (int i = 1; i <= MaxClients; i++)
-    {
-        if (!IsClientInGame(i) || IsFakeClient(i))
-        {
-            continue;
-        }
-        processed++;
-        migrated += MigrateLegacyForClient(i);
-    }
-
-    DebugLog("---- migrate end migrated=%d processed=%d ----", migrated, processed);
-    g_DebugMigrate = false;
-
-    ReplyToCommand(client, "[SM] Migrated %d rule(s) across %d client(s).", migrated, processed);
-    return Plugin_Handled;
-}
-
-static int MigrateLegacyForClient(int client)
-{
-    if (!g_DbReady || g_IdRules == null || g_OutputMap == null)
-    {
-        DebugLog("client=%d skip db_ready=%d id_rules=%d output_rules=%d",
-            client,
-            g_DbReady ? 1 : 0,
-            GetStringMapCount(g_IdRules),
-            GetStringMapCount(g_OutputMap));
-        return 0;
-    }
-
-    char currentName[MAX_NAME_LENGTH];
-    GetClientName(client, currentName, sizeof(currentName));
-
-    char lowerName[MAX_NAME_LENGTH];
-    strcopy(lowerName, sizeof(lowerName), currentName);
-    ToLowercaseInPlace(lowerName, sizeof(lowerName));
-
-    char steam2[32];
-    char steam64[32];
-    GetClientIds(client, steam2, sizeof(steam2), steam64, sizeof(steam64));
-
-    char migrateId[32];
-    GetPreferredClientId(steam64, steam2, migrateId, sizeof(migrateId));
-
-    if (!migrateId[0])
-    {
-        DebugLog("client=%d name=\"%s\" no_steamid", client, currentName);
-        return 0;
-    }
-
-    char existing[MAX_RENAME];
-    if (TryGetIdRule(steam64, steam2, existing, sizeof(existing)) && StrEqual(existing, currentName, false))
-    {
-        DebugLog("client=%d name=\"%s\" id=%s already_set", client, currentName, migrateId);
-        return 0;
-    }
-
-    SaveRule(migrateId, currentName);
-    SetIdRuleCache(migrateId, currentName);
-    DebugLog("client=%d name=\"%s\" id=%s migrated=1", client, currentName, migrateId);
-    return 1;
-}
-
 static void SaveRule(const char[] pattern, const char[] newname)
 {
     if (!g_DbReady || g_Db == null)
@@ -516,10 +416,6 @@ public void SQL_LoadRulesCallback(Database db, DBResultSet results, const char[]
     {
         g_IdRules.Clear();
     }
-    if (g_OutputMap != null)
-    {
-        g_OutputMap.Clear();
-    }
 
     if (results == null)
     {
@@ -536,15 +432,6 @@ public void SQL_LoadRulesCallback(Database db, DBResultSet results, const char[]
         if (IsIdString(pattern))
         {
             g_IdRules.SetString(pattern, newname);
-            continue;
-        }
-
-        char lowerNew[MAX_RENAME];
-        strcopy(lowerNew, sizeof(lowerNew), newname);
-        ToLowercaseInPlace(lowerNew, sizeof(lowerNew));
-        if (!g_OutputMap.ContainsKey(lowerNew))
-        {
-            g_OutputMap.SetString(lowerNew, newname);
         }
     }
 }
@@ -604,57 +491,6 @@ static bool TryGetIdRule(const char[] steam64, const char[] steam2, char[] outpu
     return false;
 }
 
-static bool TryGetOutputMatch(const char[] lowerName, char[] output, int maxlen)
-{
-    char key[MAX_RENAME];
-    return FindBestOutputMatch(lowerName, output, maxlen, key, sizeof(key));
-}
-
-static bool FindBestOutputMatch(const char[] lowerName, char[] output, int outMax, char[] keyOut, int keyMax)
-{
-    if (g_OutputMap == null)
-    {
-        return false;
-    }
-
-    StringMapSnapshot snap = g_OutputMap.Snapshot();
-    int count = snap.Length;
-    int bestLen = -1;
-    char key[MAX_RENAME];
-    char bestKey[MAX_RENAME];
-    bestKey[0] = '\0';
-
-    for (int i = 0; i < count; i++)
-    {
-        snap.GetKey(i, key, sizeof(key));
-        if (StrContains(lowerName, key) == -1)
-        {
-            continue;
-        }
-
-        int keyLen = strlen(key);
-        if (keyLen > bestLen)
-        {
-            bestLen = keyLen;
-            strcopy(bestKey, sizeof(bestKey), key);
-        }
-    }
-
-    delete snap;
-
-    if (bestKey[0] == '\0')
-    {
-        return false;
-    }
-
-    if (keyMax > 0)
-    {
-        strcopy(keyOut, keyMax, bestKey);
-    }
-
-    return g_OutputMap.GetString(bestKey, output, outMax);
-}
-
 static void GetClientIds(int client, char[] steam2, int steam2Max, char[] steam64, int steam64Max)
 {
     steam2[0] = '\0';
@@ -690,29 +526,4 @@ static bool IsIdString(const char[] text)
     }
 
     return true;
-}
-
-static void DebugLog(const char[] fmt, any ...)
-{
-    if (!g_DebugMigrate)
-    {
-        return;
-    }
-
-    char buffer[512];
-    VFormat(buffer, sizeof(buffer), fmt, 2);
-    LogToFileEx(g_DebugLogPath, "%s", buffer);
-}
-
-static int GetStringMapCount(StringMap map)
-{
-    if (map == null)
-    {
-        return 0;
-    }
-
-    StringMapSnapshot snap = map.Snapshot();
-    int count = snap.Length;
-    delete snap;
-    return count;
 }
