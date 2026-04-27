@@ -117,20 +117,15 @@ public void SQL_OnSchemaOpComplete(Database db, DBResultSet results, const char[
 
 public Action Command_Feedback(int client, int args)
 {
-    if (client <= 0 || !IsClientInGame(client))
-    {
-        return Plugin_Handled;
-    }
-
     if (args < 1)
     {
-        PrintToChat(client, "[Kogasa] Format: !feedback message");
+        ReplyToCommand(client, "[Kogasa] Format: !feedback message");
         return Plugin_Handled;
     }
 
     if (g_hDatabase == null)
     {
-        PrintToChat(client, "[Kogasa] Feedback database is unavailable right now.");
+        ReplyToCommand(client, "[Kogasa] Feedback database is unavailable right now.");
         return Plugin_Handled;
     }
 
@@ -142,16 +137,23 @@ public Action Command_Feedback(int client, int args)
 
     if (message[0] == '\0')
     {
-        PrintToChat(client, "[Kogasa] Format: !feedback message");
+        ReplyToCommand(client, "[Kogasa] Format: !feedback message");
         return Plugin_Handled;
     }
 
     char name[MAX_NAME_LENGTH];
-    GetClientName(client, name, sizeof(name));
-    TrimString(name);
-    if (name[0] == '\0')
+    if (client > 0 && IsClientInGame(client))
     {
-        strcopy(name, sizeof(name), "unknown");
+        GetClientName(client, name, sizeof(name));
+        TrimString(name);
+        if (name[0] == '\0')
+        {
+            strcopy(name, sizeof(name), "unknown");
+        }
+    }
+    else
+    {
+        strcopy(name, sizeof(name), "console");
     }
 
     char escapedName[(MAX_NAME_LENGTH * 2) + 1];
@@ -166,8 +168,8 @@ public Action Command_Feedback(int client, int args)
         escapedName,
         escapedMessage);
 
-    SQL_TQuery(g_hDatabase, SQL_OnFeedbackInserted, query, GetClientUserId(client));
-    PrintToChat(client, "[Kogasa] Feedback sent.");
+    SQL_TQuery(g_hDatabase, SQL_OnFeedbackInserted, query, (client > 0 && IsClientInGame(client)) ? GetClientUserId(client) : 0);
+    ReplyToCommand(client, "[Kogasa] Feedback sent.");
 
     return Plugin_Handled;
 }
